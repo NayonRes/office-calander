@@ -16,15 +16,30 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import moment from "moment";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
 const LightTooltip = styled(({ className, ...props }) => (
-  <Tooltip placement="top" {...props} classes={{ popper: className }} />
+  <Tooltip
+    placement="top"
+    arrow={true}
+    {...props}
+    classes={{ popper: className }}
+  />
 ))(({ theme }) => ({
+  // [`& .${tooltipClasses.arrow}`]: {
+  //   color: theme.palette.common.white,
+  //   boxShadow: theme.shadows[1],
+  // },
   [`& .${tooltipClasses.tooltip}`]: {
     backgroundColor: theme.palette.common.white,
     color: "rgba(0, 0, 0, 0.87)",
     boxShadow: theme.shadows[1],
-    fontSize: 11,
+    fontSize: 14,
   },
 }));
 const weaklyHolidaysColor = "#F5B041";
@@ -133,6 +148,9 @@ function App() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [active, setActive] = useState("Govt. Holidays");
   const [userDays, setUserDays] = useState(Holidays);
+  const totalCasualLeave = 10;
+  const totalMediacalLeave = 10;
+  const totalAnnualLeave = 20;
   const handleChange = (panel) => (event, newExpanded) => {
     setExpanded(newExpanded ? panel : false);
   };
@@ -214,15 +232,27 @@ function App() {
   const changeMenu = (id) => {
     if (id === "Govt. Holidays") {
       setUserDays(Holidays);
-    } else {
-      setUserDays(AttendanceSummary);
+    } else if (id === "Attendance Summary") {
+      setUserDays(AttendanceSummary.filter((item) => item.type === "Present"));
+    } else if (id === "Casual Leaves") {
+      setUserDays(
+        AttendanceSummary.filter((item) => item.type === "Casual Leave")
+      );
+    } else if (id === "Medical Leaves") {
+      setUserDays(
+        AttendanceSummary.filter((item) => item.type === "Medical Leave")
+      );
+    } else if (id === "Annual Leaves") {
+      setUserDays(
+        AttendanceSummary.filter((item) => item.type === "Annual Leave")
+      );
     }
     setActive(id);
     console.log("id", id);
   };
   const getFirstdayOfTheYear = () => {
     console.log("current year", new Date().getFullYear());
-    let year = new Date().getFullYear();
+    let year = currentYear;
     // setCurrentYear(year);
     const isLeapYear = year % 4;
     console.log("isLeapYear", isLeapYear);
@@ -247,18 +277,43 @@ function App() {
   const calculateSkipNo = (no) => {
     console.log("calculateSkipNo", no);
   };
+  const calculateCasualLeaves = () => {
+    let remain =
+      totalCasualLeave -
+      AttendanceSummary.filter((item) => item.type === "Casual Leave").length;
+    if (remain < 10) {
+      return `0${remain}`;
+    }
+    return remain;
+  };
+  const calculateMedicalLeaves = () => {
+    let remain =
+      totalMediacalLeave -
+      AttendanceSummary.filter((item) => item.type === "Medical Leave").length;
+    if (remain < 10) {
+      return `0${remain}`;
+    }
+    return remain;
+  };
+  const calculateAnnualLeaves = () => {
+    let remain =
+      totalAnnualLeave -
+      AttendanceSummary.filter((item) => item.type === "Annual Leave").length;
+    console.log("remain", remain);
+    if (remain < 10) {
+      return `0${remain}`;
+    }
+    return remain;
+  };
   const checkHoliday = (index, skipNo, month, day) => {
     let holidayObj = userDays.filter(
       (holiday) => holiday["monthName"] === month.name && holiday["day"] === day
     );
-    // let holidayObj = Holidays.filter(
-    //   (holiday) => holiday["monthName"] === month.name && holiday["day"] === day
-    // );
-    // console.log("holidayObj", holidayObj[0]?.description);
 
     if (holidayObj.length > 0) {
       return (
-        <LightTooltip title={`${holidayObj[0].description}`}>
+        <LightTooltip title={fnCheckTimes(holidayObj[0])}>
+          {/* <LightTooltip title={`${holidayObj[0].description}`}> */}
           <div
             style={{
               background: holidayObj.length > 0 ? "#dfdfdf" : "",
@@ -290,203 +345,345 @@ function App() {
     console.log("date", date);
   };
   let skipNo = 0;
+  const fnCheckTimes = (obj) => {
+    console.log("obj", obj);
+    let result = "00:00";
+    if (obj?.type === "Present") {
+      let isLate = false;
+      let isCompletedWorkingHours = false;
+      let checkOut = obj?.checkOut;
+      let checkIn = obj?.checkIn;
+      let newCheckOut = checkOut.split(":");
+      console.log("newCheckOut", newCheckOut);
+      let newCheckIn = checkIn.split(":");
+      console.log("newCheckIn", newCheckIn);
+
+      let minDiff = parseInt(newCheckOut[1]) - parseInt(newCheckIn[1]);
+      let hourDiff = parseInt(newCheckOut[0]) - parseInt(newCheckIn[0]);
+      console.log("minDiff", minDiff);
+      console.log("hourDiff", hourDiff);
+
+      if (parseInt(newCheckIn[0]) > 10) {
+        isLate = true;
+      } else if (
+        parseInt(newCheckIn[0]) === 10 &&
+        parseInt(newCheckIn[1]) >= 30
+      ) {
+        isLate = true;
+      }
+      if (minDiff < 0) {
+        minDiff = minDiff + 60;
+        hourDiff = hourDiff - 1;
+      }
+
+      if (hourDiff > 8) {
+        isCompletedWorkingHours = true;
+      } else if (hourDiff === 8 && minDiff >= 30) {
+        isCompletedWorkingHours = true;
+      }
+      if (minDiff < 10) {
+        minDiff = `0${minDiff}`;
+      }
+      if (hourDiff < 10) {
+        hourDiff = `0${hourDiff}`;
+      }
+
+      result = `${hourDiff}:${minDiff} hours || isCompletedWorkingHours :${isCompletedWorkingHours}, "late",${isLate}`;
+      return (
+        <>
+          {/* <h1>
+            Check-In : {obj?.checkIn}{" "}
+            <Button
+              variant="contained"
+              disableElevation
+              size="small"
+              color={isLate ? "error" : "secondary"}
+            >
+              {isLate ? "Late" : "In-Time"}
+            </Button>
+          </h1>
+          <h1>Check-Out : {obj?.checkOut}</h1>
+          <h1>
+            Wrok Duration : {hourDiff}:{minDiff} hours{" "}
+          </h1> */}
+
+          <Table aria-label="simple table">
+            <TableBody>
+              <TableRow
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell align="right">Check-In</TableCell>
+                <TableCell align="right">{obj?.checkIn}</TableCell>
+                <TableCell align="right">
+                  {" "}
+                  <Button
+                    variant="contained"
+                    disableElevation
+                    size="small"
+                    color={isLate ? "error" : "secondary"}
+                  >
+                    {isLate ? "Late" : "In-Time"}
+                  </Button>
+                </TableCell>
+              </TableRow>
+              <TableRow
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell align="right">Check-Out </TableCell>
+                <TableCell align="right">{obj?.checkOut}</TableCell>
+                <TableCell align="right">
+                  {/* {" "}
+                  <Button
+                    variant="contained"
+                    disableElevation
+                    size="small"
+                    color={isLate ? "error" : "secondary"}
+                  >
+                    {isLate ? "Late" : "In-Time"}
+                  </Button> */}
+                </TableCell>
+              </TableRow>
+              <TableRow
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell align="right"> Wrok Duration </TableCell>
+                <TableCell align="right">
+                  {hourDiff}:{minDiff} hours
+                </TableCell>
+                <TableCell align="right">
+                  {" "}
+                  <Button
+                    variant="contained"
+                    disableElevation
+                    size="small"
+                    color={isCompletedWorkingHours ? "secondary" : "error"}
+                  >
+                    {isCompletedWorkingHours ? "Complete" : "Not Complete"}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </>
+      );
+    }
+    return obj?.description;
+  };
   return (
-    <div style={{ maxWidth: "1366px", margin: "auto" }}>
-      <Grid
-        container
-        justifyContent="center"
-        alignItems="center"
-        direction="column"
-        style={{
-          height: "125px",
-          background: "#1dd1a1",
-        }}
-      >
-        {/* <div> */}
-        <p
+    <>
+      <div style={{ maxWidth: "1366px", margin: "auto" }}>
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
           style={{
-            color: "#fff",
-            fontSize: "64px",
-            fontWeight: "bold",
-            margin: 0,
-            letterSpacing: "10px",
-            // textAlign: "center",
+            height: "125px",
+            background: "#1dd1a1",
           }}
         >
-          {currentYear}
-        </p>
-        <p
-          style={{
-            color: "#fff",
-            fontSize: "65px",
-            margin: 0,
-            fontFamily: "'Passions Conflict', cursive",
-            letterSpacing: "15px",
-          }}
-        >
-          Calender
-        </p>
+          {/* <div> */}
+          <p
+            style={{
+              color: "#fff",
+              fontSize: "64px",
+              fontWeight: "bold",
+              margin: 0,
+              letterSpacing: "10px",
+              // textAlign: "center",
+            }}
+          >
+            {currentYear}
+          </p>
+          <p
+            style={{
+              color: "#fff",
+              fontSize: "65px",
+              margin: 0,
+              fontFamily: "'Passions Conflict', cursive",
+              letterSpacing: "15px",
+            }}
+          >
+            Calender
+          </p>
 
-        {/* </div> */}
-      </Grid>
-      <Grid container>
-        <Grid item xs={2.5} style={{ background: "#ddd" }}>
-          <Grid container>
-            <Grid item xs={12}>
-              <div
-                className={`${classes.holidayCard} ${
-                  active === "Govt. Holidays" && classes.activeStyle
-                }`}
-                onClick={() => changeMenu("Govt. Holidays")}
-              >
-                <p className={classes.holidayCardTitle}> Govt. Holidays</p>
-                <p className={classes.holidayCardDays}>{Holidays.length}</p>
-              </div>
-            </Grid>
-            <Grid item xs={12}>
-              <div
-                className={`${classes.holidayCard} ${
-                  active === "Attendance Summary" && classes.activeStyle
-                }`}
-                onClick={() => changeMenu("Attendance Summary")}
-              >
-                <p className={classes.holidayCardTitle}> Attendance Summary</p>
-                <p className={classes.holidayCardDays}>58</p>
-              </div>
-            </Grid>
-            <Grid item xs={12}>
-              <div
-                className={`${classes.holidayCard} ${
-                  active === "Casual Leaves" && classes.activeStyle
-                }`}
-                onClick={() => changeMenu("Casual Leaves")}
-              >
-                <p className={classes.holidayCardTitle}>Casual Leaves</p>
-
-                <Grid container>
-                  <Grid item xs={6} style={{ borderRight: "1px solid" }}>
-                    <p className={classes.holidayCardDays}>10</p>
-                    <p className={classes.holidayCardDes}>Total</p>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <p className={classes.holidayCardDays}>06</p>
-                    <p className={classes.holidayCardDes}> Remaining</p>
-                  </Grid>
-                </Grid>
-              </div>
-            </Grid>
-            <Grid item xs={12}>
-              <div
-                className={`${classes.holidayCard} ${
-                  active === "Medical Leaves" && classes.activeStyle
-                }`}
-                onClick={() => changeMenu("Medical Leaves")}
-              >
-                <p className={classes.holidayCardTitle}> Medical Leaves</p>
-
-                <Grid container>
-                  <Grid item xs={6} style={{ borderRight: "1px solid" }}>
-                    <p className={classes.holidayCardDays}>10</p>
-                    <p className={classes.holidayCardDes}>Total</p>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <p className={classes.holidayCardDays}>05</p>
-                    <p className={classes.holidayCardDes}> Remaining</p>
-                  </Grid>
-                </Grid>
-              </div>
-            </Grid>
-            <Grid item xs={12}>
-              <div
-                className={`${classes.holidayCard} ${
-                  active === "Annual Leaves" && classes.activeStyle
-                }`}
-                onClick={() => changeMenu("Annual Leaves")}
-              >
-                <p className={classes.holidayCardTitle}> Annual Leaves</p>
-
-                <Grid container>
-                  <Grid item xs={6} style={{ borderRight: "1px solid" }}>
-                    <p className={classes.holidayCardDays}>20</p>
-                    <p className={classes.holidayCardDes}>Total</p>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <p className={classes.holidayCardDays}>12</p>
-                    <p className={classes.holidayCardDes}> Remaining</p>
-                  </Grid>
-                </Grid>
-              </div>
-            </Grid>
-
-            <Grid item xs={12}>
-              <div className={classes.holidayCard}>
-                <p className={classes.holidayCardTitle}> Events</p>
-                <Accordion
-                  expanded={expanded === "panel1"}
-                  onChange={handleChange("panel1")}
+          {/* </div> */}
+        </Grid>
+        <Grid container>
+          <Grid item xs={2.5} style={{ background: "#ddd" }}>
+            <Grid container>
+              <Grid item xs={12}>
+                <div
+                  className={`${classes.holidayCard} ${
+                    active === "Govt. Holidays" && classes.activeStyle
+                  }`}
+                  onClick={() => changeMenu("Govt. Holidays")}
                 >
-                  <AccordionSummary
-                    aria-controls="panel1d-content"
-                    id="panel1d-header"
-                  >
-                    <Typography>Annual Tour</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography
-                      variant="body2"
-                      style={{ fontFamily: "'Lato', sans-serif" }}
-                    >
-                      Lorem Ipsum is simply dummy text of the printing and
-                      typesetting industry. Lorem Ipsum has been the industry's
-                      standard dummy text ever since the 1600s
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-                <Accordion
-                  expanded={expanded === "panel2"}
-                  onChange={handleChange("panel2")}
+                  <p className={classes.holidayCardTitle}> Govt. Holidays</p>
+                  <p className={classes.holidayCardDays}>{Holidays.length}</p>
+                </div>
+              </Grid>
+              <Grid item xs={12}>
+                <div
+                  className={`${classes.holidayCard} ${
+                    active === "Attendance Summary" && classes.activeStyle
+                  }`}
+                  onClick={() => changeMenu("Attendance Summary")}
                 >
-                  <AccordionSummary
-                    aria-controls="panel2d-content"
-                    id="panel2d-header"
-                  >
-                    <Typography>Anniversary Celebration</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography
-                      variant="body2"
-                      style={{ fontFamily: "'Lato', sans-serif" }}
-                    >
-                      Lorem Ipsum is simply dummy text of the printing and
-                      typesetting industry. Lorem Ipsum has been the industry's
-                      standard dummy text ever since the 1500s
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-                <Accordion
-                  expanded={expanded === "panel3"}
-                  onChange={handleChange("panel3")}
+                  <p className={classes.holidayCardTitle}>
+                    {" "}
+                    Attendance Summary
+                  </p>
+                  <p className={classes.holidayCardDays}>
+                    {AttendanceSummary.length}
+                  </p>
+                </div>
+              </Grid>
+              <Grid item xs={12}>
+                <div
+                  className={`${classes.holidayCard} ${
+                    active === "Casual Leaves" && classes.activeStyle
+                  }`}
+                  onClick={() => changeMenu("Casual Leaves")}
                 >
-                  <AccordionSummary
-                    aria-controls="panel3d-content"
-                    id="panel3d-header"
+                  <p className={classes.holidayCardTitle}>Casual Leaves</p>
+
+                  <Grid container>
+                    <Grid item xs={6} style={{ borderRight: "1px solid" }}>
+                      <p className={classes.holidayCardDays}>
+                        {totalCasualLeave}
+                      </p>
+                      <p className={classes.holidayCardDes}>Total</p>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <p className={classes.holidayCardDays}>
+                        {calculateCasualLeaves()}
+                      </p>
+                      <p className={classes.holidayCardDes}> Remaining</p>
+                    </Grid>
+                  </Grid>
+                </div>
+              </Grid>
+              <Grid item xs={12}>
+                <div
+                  className={`${classes.holidayCard} ${
+                    active === "Medical Leaves" && classes.activeStyle
+                  }`}
+                  onClick={() => changeMenu("Medical Leaves")}
+                >
+                  <p className={classes.holidayCardTitle}> Medical Leaves</p>
+
+                  <Grid container>
+                    <Grid item xs={6} style={{ borderRight: "1px solid" }}>
+                      <p className={classes.holidayCardDays}>
+                        {totalMediacalLeave}
+                      </p>
+                      <p className={classes.holidayCardDes}>Total</p>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <p className={classes.holidayCardDays}>
+                        {calculateMedicalLeaves()}
+                      </p>
+                      <p className={classes.holidayCardDes}> Remaining</p>
+                    </Grid>
+                  </Grid>
+                </div>
+              </Grid>
+              <Grid item xs={12}>
+                <div
+                  className={`${classes.holidayCard} ${
+                    active === "Annual Leaves" && classes.activeStyle
+                  }`}
+                  onClick={() => changeMenu("Annual Leaves")}
+                >
+                  <p className={classes.holidayCardTitle}> Annual Leaves</p>
+
+                  <Grid container>
+                    <Grid item xs={6} style={{ borderRight: "1px solid" }}>
+                      <p className={classes.holidayCardDays}>
+                        {totalAnnualLeave}
+                      </p>
+                      <p className={classes.holidayCardDes}>Total</p>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <p className={classes.holidayCardDays}>
+                        {calculateAnnualLeaves()}
+                      </p>
+                      <p className={classes.holidayCardDes}> Remaining</p>
+                    </Grid>
+                  </Grid>
+                </div>
+              </Grid>
+
+              <Grid item xs={12}>
+                <div className={classes.holidayCard}>
+                  <p className={classes.holidayCardTitle}> Events</p>
+                  <Accordion
+                    expanded={expanded === "panel1"}
+                    onChange={handleChange("panel1")}
                   >
-                    <Typography>Office Day-Out</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography
-                      variant="body2"
-                      style={{ fontFamily: "'Lato', sans-serif" }}
+                    <AccordionSummary
+                      aria-controls="panel1d-content"
+                      id="panel1d-header"
                     >
-                      Lorem Ipsum is simply dummy text of the printing and
-                      typesetting industry. Lorem Ipsum has been the industry's
-                      standard dummy text ever since the 1500s
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-              </div>
-            </Grid>
-            {/* <Grid item xs={6}>
+                      <Typography>Annual Tour</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography
+                        variant="body2"
+                        style={{ fontFamily: "'Lato', sans-serif" }}
+                      >
+                        Lorem Ipsum is simply dummy text of the printing and
+                        typesetting industry. Lorem Ipsum has been the
+                        industry's standard dummy text ever since the 1600s
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                  <Accordion
+                    expanded={expanded === "panel2"}
+                    onChange={handleChange("panel2")}
+                  >
+                    <AccordionSummary
+                      aria-controls="panel2d-content"
+                      id="panel2d-header"
+                    >
+                      <Typography>Anniversary Celebration</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography
+                        variant="body2"
+                        style={{ fontFamily: "'Lato', sans-serif" }}
+                      >
+                        Lorem Ipsum is simply dummy text of the printing and
+                        typesetting industry. Lorem Ipsum has been the
+                        industry's standard dummy text ever since the 1500s
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                  <Accordion
+                    expanded={expanded === "panel3"}
+                    onChange={handleChange("panel3")}
+                  >
+                    <AccordionSummary
+                      aria-controls="panel3d-content"
+                      id="panel3d-header"
+                    >
+                      <Typography>Office Day-Out</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography
+                        variant="body2"
+                        style={{ fontFamily: "'Lato', sans-serif" }}
+                      >
+                        Lorem Ipsum is simply dummy text of the printing and
+                        typesetting industry. Lorem Ipsum has been the
+                        industry's standard dummy text ever since the 1500s
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                </div>
+              </Grid>
+              {/* <Grid item xs={6}>
               <div
                 style={{
                   background: "#fff",
@@ -530,7 +727,7 @@ function App() {
                 Medical Leave
               </div>
             </Grid> */}
-            {/* <Grid item xs={12}>
+              {/* <Grid item xs={12}>
               <div
                 style={{
                   background: "#fff",
@@ -545,47 +742,26 @@ function App() {
                 Attendance Summary
               </div>
             </Grid> */}
+            </Grid>
           </Grid>
-        </Grid>
-        <Grid item xs={9.5} style={{ background: "#fff" }}>
-          <Grid container spacing={0.5}>
-            {months?.map((m, index) => {
-              if (index === 0) {
-                skipNo = getFirstdayOfTheYear();
-              } else {
-                skipNo = (skipNo + months[index - 1].days) % 7;
-              }
+          <Grid item xs={9.5} style={{ background: "#fff" }}>
+            <Grid container spacing={0.5}>
+              {months?.map((m, index) => {
+                if (index === 0) {
+                  skipNo = getFirstdayOfTheYear();
+                } else {
+                  skipNo = (skipNo + months[index - 1].days) % 7;
+                }
 
-              return (
-                <Grid key={index} item xs={3}>
-                  <div className={classes.monthSection}>
-                    <p className={classes.monthTitle}>
-                      {m.name}
-                      <div className={classes.monthNoStyle}>{m.monthNo}</div>
-                    </p>
-                    <Grid container spacing={1}>
-                      {weekdayNames?.map((d, i) => (
-                        <Grid
-                          key={i}
-                          item
-                          xs={1.714285714285714}
-                          style={{
-                            textAlign: "center",
-                            color: weaklyHolidaysIndexNo.includes(i)
-                              ? weaklyHolidaysColor
-                              : mainColor,
-                            fontWeight: "bold",
-                            fontSize: "14px",
-                          }}
-                        >
-                          {d?.name}
-                        </Grid>
-                      ))}
-                    </Grid>
-                    <br />
-                    <Grid container spacing={1}>
-                      {[...Array(dateBlockPrintNo).keys()].map((no, i) => {
-                        return (
+                return (
+                  <Grid key={index} item xs={3}>
+                    <div className={classes.monthSection}>
+                      <p className={classes.monthTitle}>
+                        {m.name}
+                        <div className={classes.monthNoStyle}>{m.monthNo}</div>
+                      </p>
+                      <Grid container spacing={1}>
+                        {weekdayNames?.map((d, i) => (
                           <Grid
                             key={i}
                             item
@@ -595,24 +771,46 @@ function App() {
                               color: weaklyHolidaysIndexNo.includes(i)
                                 ? weaklyHolidaysColor
                                 : mainColor,
+                              fontWeight: "bold",
                               fontSize: "14px",
-                              cursor: "pointer",
                             }}
-                            onClick={() => selectedDate(i - skipNo + 1)}
                           >
-                            {checkHoliday(i, skipNo, m, i - skipNo + 1)}
+                            {d?.name}
                           </Grid>
-                        );
-                      })}
-                    </Grid>
-                  </div>
-                </Grid>
-              );
-            })}
+                        ))}
+                      </Grid>
+                      <br />
+                      <Grid container spacing={1}>
+                        {[...Array(dateBlockPrintNo).keys()].map((no, i) => {
+                          return (
+                            <Grid
+                              key={i}
+                              item
+                              xs={1.714285714285714}
+                              style={{
+                                textAlign: "center",
+                                color: weaklyHolidaysIndexNo.includes(i)
+                                  ? weaklyHolidaysColor
+                                  : mainColor,
+                                fontSize: "14px",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => selectedDate(i - skipNo + 1)}
+                            >
+                              {checkHoliday(i, skipNo, m, i - skipNo + 1)}
+                            </Grid>
+                          );
+                        })}
+                      </Grid>
+                    </div>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
-    </div>
+      </div>
+    </>
   );
 }
 
