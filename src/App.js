@@ -22,6 +22,15 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Avatar from "@mui/material/Avatar";
+import dayjs from "dayjs";
+import TextField from "@mui/material/TextField";
+import Stack from "@mui/material/Stack";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { IconButton } from "@mui/material";
+import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 
 const LightTooltip = styled(({ className, ...props }) => (
   <Tooltip
@@ -105,6 +114,39 @@ const useStyles = makeStyles({
     borderRight: "3px solid #1dd1a1",
     borderBottom: "1px solid #1dd1a1",
   },
+  summeryTableStyle: {
+    border: "1px solid #ddd !important",
+    borderRadius: "10px !important",
+    marginBottom: 8,
+    "& td": {
+      padding: "7px !important",
+      fontSize: "12px",
+      // borderBottom: "none !important",
+    },
+  },
+  successButtonStyle: {
+    minWidth: "110px !important",
+    border: "1px solid #1dd1a1 !important",
+    color: "#1dd1a1 !important",
+    fontSize: "12px !important",
+
+    textAlign: "center",
+    textDecoration: "none",
+    display: "inline-block",
+    borderRadius: "4px",
+    padding: "4px",
+  },
+  errorButtonStyle: {
+    minWidth: "110px !important",
+    border: "1px solid #ee5253 !important",
+    color: "#ee5253 !important",
+    fontSize: "12px !important",
+    textAlign: "center",
+    textDecoration: "none",
+    display: "inline-block",
+    borderRadius: "4px",
+    padding: "4px",
+  },
 });
 const Accordion = styled((props) => (
   <MuiAccordion disableGutters elevation={0} square {...props} />
@@ -148,6 +190,9 @@ function App() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [active, setActive] = useState("Govt. Holidays");
   const [userDays, setUserDays] = useState(Holidays);
+  const [editYear, setEditYear] = useState(false);
+  const [value, setValue] = React.useState(dayjs(new Date()));
+
   const totalCasualLeave = 10;
   const totalMediacalLeave = 10;
   const totalAnnualLeave = 20;
@@ -391,75 +436,56 @@ function App() {
       result = `${hourDiff}:${minDiff} hours || isCompletedWorkingHours :${isCompletedWorkingHours}, "late",${isLate}`;
       return (
         <>
-          {/* <h1>
-            Check-In : {obj?.checkIn}{" "}
-            <Button
-              variant="contained"
-              disableElevation
-              size="small"
-              color={isLate ? "error" : "secondary"}
-            >
-              {isLate ? "Late" : "In-Time"}
-            </Button>
-          </h1>
-          <h1>Check-Out : {obj?.checkOut}</h1>
-          <h1>
-            Wrok Duration : {hourDiff}:{minDiff} hours{" "}
-          </h1> */}
-
-          <Table aria-label="simple table">
+          <h4 style={{ textAlign: "center", margin: 8 }}>
+            Summery of {moment(obj?.date, "DD-MM-YYYY").format("DD MMMM, YYYY")}
+          </h4>
+          <Table
+            aria-label="simple table"
+            className={classes.summeryTableStyle}
+          >
             <TableBody>
-              <TableRow
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell align="right">Check-In</TableCell>
-                <TableCell align="right">{obj?.checkIn}</TableCell>
-                <TableCell align="right">
+              <TableRow>
+                <TableCell align="left">
+                  Check-In <br />
+                  (10:30)
+                </TableCell>
+                <TableCell align="left">{obj?.checkIn}</TableCell>
+                <TableCell align="left">
                   {" "}
-                  <Button
-                    variant="contained"
-                    disableElevation
-                    size="small"
-                    color={isLate ? "error" : "secondary"}
+                  <button
+                    disabled
+                    className={
+                      isLate
+                        ? classes.errorButtonStyle
+                        : classes.successButtonStyle
+                    }
                   >
                     {isLate ? "Late" : "In-Time"}
-                  </Button>
+                  </button>
                 </TableCell>
               </TableRow>
-              <TableRow
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell align="right">Check-Out </TableCell>
-                <TableCell align="right">{obj?.checkOut}</TableCell>
-                <TableCell align="right">
-                  {/* {" "}
-                  <Button
-                    variant="contained"
-                    disableElevation
-                    size="small"
-                    color={isLate ? "error" : "secondary"}
-                  >
-                    {isLate ? "Late" : "In-Time"}
-                  </Button> */}
-                </TableCell>
+              <TableRow>
+                <TableCell align="left">Check-Out (19:00) </TableCell>
+                <TableCell align="left">{obj?.checkOut}</TableCell>
+                <TableCell align="left"></TableCell>
               </TableRow>
-              <TableRow
-                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              >
-                <TableCell align="right"> Wrok Duration </TableCell>
-                <TableCell align="right">
+              <TableRow>
+                <TableCell align="left"> Work Duration (8:30 hours)</TableCell>
+                <TableCell align="left">
                   {hourDiff}:{minDiff} hours
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="left">
                   {" "}
-                  <Button
-                    variant="contained"
-                    disableElevation
-                    size="small"
-                    color={isCompletedWorkingHours ? "secondary" : "error"}
+                  <button
+                    disabled
+                    className={
+                      isLate
+                        ? classes.errorButtonStyle
+                        : classes.successButtonStyle
+                    }
                   >
                     {isCompletedWorkingHours ? "Complete" : "Not Complete"}
-                  </Button>
+                  </button>
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -469,32 +495,87 @@ function App() {
     }
     return obj?.description;
   };
+
   return (
     <>
       <div style={{ maxWidth: "1366px", margin: "auto" }}>
         <Grid
           container
-          justifyContent="center"
+          justifyContent="space-around"
           alignItems="center"
-          direction="column"
+          // direction="column"
           style={{
             height: "125px",
             background: "#1dd1a1",
           }}
         >
           {/* <div> */}
-          <p
-            style={{
-              color: "#fff",
-              fontSize: "64px",
-              fontWeight: "bold",
-              margin: 0,
-              letterSpacing: "10px",
-              // textAlign: "center",
-            }}
-          >
-            {currentYear}
-          </p>
+          {/* <div>
+            <p>Admin</p>
+            <p>admin@gmail.com</p>
+          </div> */}
+          <div>
+            <div
+              style={{
+                color: "#fff",
+                fontSize: "64px",
+                fontWeight: "bold",
+                letterSpacing: "10px",
+                margin: 0,
+                // textAlign: "center",
+              }}
+            >
+              {currentYear}
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  // open={open}
+                  // onOpen={() => setOpen(true)}
+                  TextFieldComponent={() => null}
+                  views={["year"]}
+                  // label="Year only"
+                  value={value}
+                  onChange={(newValue) => {
+                    console.log("newValue", dayjs(newValue).format("YYYY"));
+                    setCurrentYear(dayjs(newValue).format("YYYY"));
+                    setValue(newValue);
+                  }}
+                  renderInput={({ inputRef, inputProps, InputProps }) => (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        position: "relative",
+
+                        "& input": {
+                          position: "absolute",
+                          top: -20,
+                          // left: -75,
+                        },
+                        "& button": {
+                          position: "absolute",
+                          top: -65,
+                          left: -75,
+                          border: "1px solid #fff",
+                        },
+                        "& svg": {
+                          fontSize: "40px",
+                          color: "#fff",
+                        },
+                      }}
+                    >
+                      <input
+                        style={{ visibility: "hidden" }}
+                        ref={inputRef}
+                        {...inputProps}
+                      />
+                      {InputProps?.endAdornment}
+                    </Box>
+                  )}
+                 
+                />
+              </LocalizationProvider>
+            </div>
+          </div>
           <p
             style={{
               color: "#fff",
@@ -504,12 +585,12 @@ function App() {
               letterSpacing: "15px",
             }}
           >
-            Calender
+            Calendar
           </p>
 
           {/* </div> */}
         </Grid>
-        <Grid container>
+        <Grid container style={{ display: "" }}>
           <Grid item xs={2.5} style={{ background: "#ddd" }}>
             <Grid container>
               <Grid item xs={12}>
@@ -683,65 +764,6 @@ function App() {
                   </Accordion>
                 </div>
               </Grid>
-              {/* <Grid item xs={6}>
-              <div
-                style={{
-                  background: "#fff",
-                  textAlign: "center",
-                  margin: "20px",
-                  padding: " 10px 20px 25px",
-                  borderRadius: "10px",
-                }}
-              >
-                <h1 style={{ margin: "10px" }}>10</h1>
-                Casual Leave
-              </div>
-            </Grid>
-            <Grid item xs={6}>
-              <div
-                style={{
-                  background: "#fff",
-                  textAlign: "center",
-                  margin: "20px",
-                  padding: " 10px 20px 25px",
-                  borderRadius: "10px",
-                  // padding: "15px",
-                }}
-              >
-                <h1 style={{ margin: "10px" }}>20</h1>
-                Annual Leave
-              </div>
-            </Grid>
-            <Grid item xs={6}>
-              <div
-                style={{
-                  background: "#fff",
-                  textAlign: "center",
-                  margin: "20px",
-                  padding: " 10px 20px 25px",
-                  borderRadius: "10px",
-                  // padding: "15px",
-                }}
-              >
-                <h1 style={{ margin: "10px" }}>10</h1>
-                Medical Leave
-              </div>
-            </Grid> */}
-              {/* <Grid item xs={12}>
-              <div
-                style={{
-                  background: "#fff",
-                  textAlign: "center",
-                  margin: "20px",
-                  padding: " 10px 20px 25px",
-                  borderRadius: "10px",
-                  // padding: "15px",
-                }}
-              >
-                <h1 style={{ margin: "10px" }}>58</h1>
-                Attendance Summary
-              </div>
-            </Grid> */}
             </Grid>
           </Grid>
           <Grid item xs={9.5} style={{ background: "#fff" }}>
