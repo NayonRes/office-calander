@@ -215,7 +215,7 @@ function App() {
   const [selectDateData, setSelectDateData] = useState({});
 
   const handleCheckInChange = (newValue) => {
-    console.log("newValue", newValue);
+    console.log("newValue", dayjs(newValue).format('HH:mm'));
     setCheckIn(newValue);
   };
   const handleCheckOutChange = (newValue) => {
