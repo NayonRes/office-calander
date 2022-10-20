@@ -6,6 +6,7 @@ import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Grid";
 import Holidays from "./Holidays";
 import AttendanceSummary from "./AttendanceSummary";
+import Events from "./Events";
 import { makeStyles } from "@mui/styles";
 import { styled } from "@mui/material/styles";
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
@@ -31,7 +32,18 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { IconButton } from "@mui/material";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
-
+import Test from "./Test";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
+import ClearIcon from "@mui/icons-material/Clear";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 const LightTooltip = styled(({ className, ...props }) => (
   <Tooltip
     placement="top"
@@ -49,6 +61,7 @@ const LightTooltip = styled(({ className, ...props }) => (
     color: "rgba(0, 0, 0, 0.87)",
     boxShadow: theme.shadows[1],
     fontSize: 14,
+    maxWidth: "none",
   },
 }));
 const weaklyHolidaysColor = "#F5B041";
@@ -60,7 +73,8 @@ const useStyles = makeStyles({
   },
   monthTitle: {
     textAlign: "center",
-    background: "black",
+    background: "#1dd1a1",
+    // background: "black",
     color: "white",
     margin: "0 0 10px 0",
     padding: "3px 0",
@@ -68,7 +82,8 @@ const useStyles = makeStyles({
     borderRadius: "0px 15px",
   },
   monthNoStyle: {
-    background: weaklyHolidaysColor,
+    // background: weaklyHolidaysColor,
+    background: "#35af8e",
     position: "absolute",
     padding: "3px 0",
     minWidth: "60px",
@@ -115,13 +130,10 @@ const useStyles = makeStyles({
     borderBottom: "1px solid #1dd1a1",
   },
   summeryTableStyle: {
-    border: "1px solid #ddd !important",
-    borderRadius: "10px !important",
-    marginBottom: 8,
+    marginBottom: "5px",
     "& td": {
       padding: "7px !important",
       fontSize: "12px",
-      // borderBottom: "none !important",
     },
   },
   successButtonStyle: {
@@ -189,13 +201,85 @@ function App() {
   const [expanded, setExpanded] = React.useState("");
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [active, setActive] = useState("Govt. Holidays");
+  const [newAttendanceSummary, setNewAttendanceSummary] =
+    useState(AttendanceSummary);
+  const [newHolidays, setNewHolidays] = useState(Holidays);
+  const [officeEvent, setOfficeEvent] = useState(Events);
   const [userDays, setUserDays] = useState(Holidays);
   const [editYear, setEditYear] = useState(false);
   const [value, setValue] = React.useState(dayjs(new Date()));
+  const [type, setType] = React.useState("");
+  const [checkIn, setCheckIn] = useState(dayjs("2014-08-18T21:11:54"));
+  const [checkOut, setCheckOut] = useState(dayjs("2014-08-18T21:11:54"));
+  const [description, setDescription] = useState("");
+  const [selectDateData, setSelectDateData] = useState({});
+
+  const handleCheckInChange = (newValue) => {
+    console.log("newValue", newValue);
+    setCheckIn(newValue);
+  };
+  const handleCheckOutChange = (newValue) => {
+    setCheckOut(newValue);
+  };
+  const addEvents = () => {
+    switch (type) {
+      case "Govt. Holidays":
+        newHolidays.push({
+          date: selectDateData.date,
+          monthName: selectDateData.monthName,
+          day: selectDateData.day,
+          description: description,
+        });
+        break;
+      case "Present":
+        newAttendanceSummary.push({
+          date: selectDateData.date,
+          monthName: selectDateData.monthName,
+          day: selectDateData.day,
+          year: currentYear,
+          checkIn: checkIn,
+          checkOut: checkOut,
+          type: type,
+          description: description,
+        });
+        changeMenu("Present");
+        break;
+      case "Casual Leave":
+        newAttendanceSummary.push({
+          date: selectDateData.date,
+          monthName: selectDateData.monthName,
+          day: selectDateData.day,
+          year: currentYear,
+          checkIn: "",
+          checkOut: "",
+          type: type,
+          description: type,
+        });
+        changeMenu("Casual Leave");
+        break;
+
+      default:
+        break;
+    }
+    handleClose();
+  };
+
+  const handleTypeChange = (event) => {
+    setType(event.target.value);
+  };
 
   const totalCasualLeave = 10;
   const totalMediacalLeave = 10;
   const totalAnnualLeave = 20;
+  const [open, setOpen] = React.useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
   const handleChange = (panel) => (event, newExpanded) => {
     setExpanded(newExpanded ? panel : false);
   };
@@ -276,31 +360,33 @@ function App() {
   ];
   const changeMenu = (id) => {
     if (id === "Govt. Holidays") {
-      setUserDays(Holidays);
-    } else if (id === "Attendance Summary") {
-      setUserDays(AttendanceSummary.filter((item) => item.type === "Present"));
+      setUserDays(newHolidays);
+    } else if (id === "Present") {
+      setUserDays(
+        newAttendanceSummary.filter((item) => item.type === "Present")
+      );
     } else if (id === "Casual Leaves") {
       setUserDays(
-        AttendanceSummary.filter((item) => item.type === "Casual Leave")
+        newAttendanceSummary.filter((item) => item.type === "Casual Leave")
       );
     } else if (id === "Medical Leaves") {
       setUserDays(
-        AttendanceSummary.filter((item) => item.type === "Medical Leave")
+        newAttendanceSummary.filter((item) => item.type === "Medical Leave")
       );
     } else if (id === "Annual Leaves") {
       setUserDays(
-        AttendanceSummary.filter((item) => item.type === "Annual Leave")
+        newAttendanceSummary.filter((item) => item.type === "Annual Leave")
       );
     }
     setActive(id);
-    console.log("id", id);
+    // console.log("id", id);
   };
   const getFirstdayOfTheYear = () => {
-    console.log("current year", new Date().getFullYear());
+    // console.log("current year", new Date().getFullYear());
     let year = currentYear;
     // setCurrentYear(year);
     const isLeapYear = year % 4;
-    console.log("isLeapYear", isLeapYear);
+    // console.log("isLeapYear", isLeapYear);
     if (isLeapYear === 0) {
       months[1].days = 29;
     }
@@ -311,21 +397,31 @@ function App() {
   };
   useEffect(() => {
     let firstdayNo = getFirstdayOfTheYear();
-    console.log("firstdayNo", firstdayNo);
 
     let weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
       new Date().getDay()
     ];
-    console.log("weekday", weekday);
-    console.log("fomate date", moment(new Date()).format("DD-MM-YYYY"));
   }, []);
-  const calculateSkipNo = (no) => {
-    console.log("calculateSkipNo", no);
+  const handleSelectedDate = (date) => {
+    console.log("date", date);
+    let newDay = date.day;
+    if (parseInt(date.day) < 10) {
+      newDay = `0${newDay}`;
+    }
+    let data = {
+      date: `${newDay}-${date.month.monthNo}-${currentYear}`,
+      monthName: date.month.name,
+      day: date.day,
+    };
+    console.log("data", data);
+    setSelectDateData(data);
+    handleClickOpen();
   };
   const calculateCasualLeaves = () => {
     let remain =
       totalCasualLeave -
-      AttendanceSummary.filter((item) => item.type === "Casual Leave").length;
+      newAttendanceSummary.filter((item) => item.type === "Casual Leave")
+        .length;
     if (remain < 10) {
       return `0${remain}`;
     }
@@ -334,7 +430,8 @@ function App() {
   const calculateMedicalLeaves = () => {
     let remain =
       totalMediacalLeave -
-      AttendanceSummary.filter((item) => item.type === "Medical Leave").length;
+      newAttendanceSummary.filter((item) => item.type === "Medical Leave")
+        .length;
     if (remain < 10) {
       return `0${remain}`;
     }
@@ -343,8 +440,9 @@ function App() {
   const calculateAnnualLeaves = () => {
     let remain =
       totalAnnualLeave -
-      AttendanceSummary.filter((item) => item.type === "Annual Leave").length;
-    console.log("remain", remain);
+      newAttendanceSummary.filter((item) => item.type === "Annual Leave")
+        .length;
+
     if (remain < 10) {
       return `0${remain}`;
     }
@@ -358,14 +456,17 @@ function App() {
     if (holidayObj.length > 0) {
       return (
         <LightTooltip title={fnCheckTimes(holidayObj[0])}>
-          {/* <LightTooltip title={`${holidayObj[0].description}`}> */}
           <div
             style={{
               background: holidayObj.length > 0 ? "#dfdfdf" : "",
               borderRadius: "4px",
               margin: "auto",
               fontWeight: "bold",
+              cursor: "pointer",
             }}
+            onClick={() =>
+              handleSelectedDate({ day: index - skipNo + 1, month: month })
+            }
           >
             {skipNo <= index &&
               index - skipNo < month?.days &&
@@ -380,18 +481,24 @@ function App() {
           borderRadius: "4px",
           margin: "auto",
           fontWeight: "bold",
+          cursor: "pointer",
         }}
+        onClick={() =>
+          handleSelectedDate({ day: index - skipNo + 1, month: month })
+        }
       >
         {skipNo <= index && index - skipNo < month?.days && index - skipNo + 1}
       </div>
     );
   };
-  const selectedDate = (date) => {
-    console.log("date", date);
-  };
+  // const handleSelectedDate = (date) => {
+  //   console.log("date", date);
+
+  // };
+
   let skipNo = 0;
   const fnCheckTimes = (obj) => {
-    console.log("obj", obj);
+    // console.log("obj", obj);
     let result = "00:00";
     if (obj?.type === "Present") {
       let isLate = false;
@@ -399,14 +506,33 @@ function App() {
       let checkOut = obj?.checkOut;
       let checkIn = obj?.checkIn;
       let newCheckOut = checkOut.split(":");
-      console.log("newCheckOut", newCheckOut);
+      // console.log("newCheckOut", newCheckOut);
       let newCheckIn = checkIn.split(":");
-      console.log("newCheckIn", newCheckIn);
+      // console.log("newCheckIn", newCheckIn);
+      let checkInTime = `${checkIn} AM`;
+      let checkOutTime = `${checkOut} AM`;
+
+      if (parseInt(newCheckIn[0]) > 11) {
+        let newHour = parseInt(newCheckIn[0]) - 12;
+
+        checkInTime = `${newHour}:${parseInt(newCheckIn[1])} PM`;
+      }
+      if (parseInt(newCheckOut[0]) > 11) {
+        let newHour = parseInt(newCheckOut[0]) - 12;
+        let newMin = parseInt(newCheckOut[1]);
+        if (parseInt(newHour) < 10) {
+          newHour = `0${newHour}`;
+        }
+        if (parseInt(newMin) < 10) {
+          newMin = `0${newMin}`;
+        }
+        checkOutTime = `${newHour}:${newMin} PM`;
+      }
 
       let minDiff = parseInt(newCheckOut[1]) - parseInt(newCheckIn[1]);
       let hourDiff = parseInt(newCheckOut[0]) - parseInt(newCheckIn[0]);
-      console.log("minDiff", minDiff);
-      console.log("hourDiff", hourDiff);
+      // console.log("minDiff", minDiff);
+      // console.log("hourDiff", hourDiff);
 
       if (parseInt(newCheckIn[0]) > 10) {
         isLate = true;
@@ -426,6 +552,15 @@ function App() {
       } else if (hourDiff === 8 && minDiff >= 30) {
         isCompletedWorkingHours = true;
       }
+      let minDeficiency = 30 - minDiff;
+      let hourDeficiency = 8 - hourDiff;
+      if (minDiff > 30) {
+        minDeficiency = 30 + 60 - minDiff;
+        hourDeficiency = 8 - 1 - hourDiff;
+
+        // {8-parseInt(hourDiff)}:{minDiff} hrs
+      } else {
+      }
       if (minDiff < 10) {
         minDiff = `0${minDiff}`;
       }
@@ -436,15 +571,89 @@ function App() {
       result = `${hourDiff}:${minDiff} hours || isCompletedWorkingHours :${isCompletedWorkingHours}, "late",${isLate}`;
       return (
         <>
-          <h4 style={{ textAlign: "center", margin: 8 }}>
-            Summery of {moment(obj?.date, "DD-MM-YYYY").format("DD MMMM, YYYY")}
-          </h4>
+          <Grid
+            container
+            justifyContent="space-between"
+            // style={{ marginTop: 5 }}
+          >
+            <p
+              style={{
+                textAlign: "center",
+                margin: "8px 8px 0",
+                color: "#717D7E",
+              }}
+            >
+              Total working : 8:30 hours
+            </p>
+            {/* <p
+              style={{
+                textAlign: "center",
+                margin: "8px 8px 0",
+                color: "#717D7E",
+              }}
+            >
+              {moment(obj?.date, "DD-MM-YYYY").format("DD MMMM, YYYY")}
+            </p> */}
+          </Grid>
+
           <Table
             aria-label="simple table"
             className={classes.summeryTableStyle}
           >
             <TableBody>
-              <TableRow>
+              <TableRow
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              >
+                <TableCell align="left" style={{ color: "#717D7E" }}>
+                  Check-In (Last punch time :- 10:30 AM)
+                </TableCell>
+                <TableCell align="left">
+                  <button
+                    disabled
+                    className={
+                      isLate
+                        ? classes.errorButtonStyle
+                        : classes.successButtonStyle
+                    }
+                  >
+                    {checkInTime}
+                    {/* {obj?.checkIn > 12
+                      ? `${obj?.checkIn} AM`
+                      : `${obj?.checkIn - 12} PM`} */}
+                  </button>
+                </TableCell>
+                <TableCell align="left" style={{ color: "#717D7E" }}>
+                  Check-Out{" "}
+                </TableCell>
+                <TableCell align="left" style={{ position: "relative" }}>
+                  {" "}
+                  <button
+                    disabled
+                    className={
+                      isCompletedWorkingHours
+                        ? classes.successButtonStyle
+                        : classes.errorButtonStyle
+                    }
+                  >
+                    {checkOutTime}
+                    {/* {isCompletedWorkingHours ? "Complete" : "Not Complete"} */}
+                  </button>
+                  {!isCompletedWorkingHours && (
+                    <>
+                      <p
+                        style={{
+                          position: "absolute",
+                          color: "#ee5253",
+                          margin: 0,
+                        }}
+                      >
+                        Deficiency : {hourDeficiency}:{minDeficiency} hrs
+                      </p>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+              {/* <TableRow>
                 <TableCell align="left">
                   Check-In <br />
                   (10:30)
@@ -463,13 +672,13 @@ function App() {
                     {isLate ? "Late" : "In-Time"}
                   </button>
                 </TableCell>
-              </TableRow>
-              <TableRow>
+              </TableRow> */}
+              {/* <TableRow>
                 <TableCell align="left">Check-Out (19:00) </TableCell>
                 <TableCell align="left">{obj?.checkOut}</TableCell>
                 <TableCell align="left"></TableCell>
-              </TableRow>
-              <TableRow>
+              </TableRow> */}
+              {/* <TableRow>
                 <TableCell align="left"> Work Duration (8:30 hours)</TableCell>
                 <TableCell align="left">
                   {hourDiff}:{minDiff} hours
@@ -479,15 +688,15 @@ function App() {
                   <button
                     disabled
                     className={
-                      isLate
-                        ? classes.errorButtonStyle
-                        : classes.successButtonStyle
+                      isCompletedWorkingHours
+                        ? classes.successButtonStyle
+                        : classes.errorButtonStyle
                     }
                   >
                     {isCompletedWorkingHours ? "Complete" : "Not Complete"}
                   </button>
                 </TableCell>
-              </TableRow>
+              </TableRow> */}
             </TableBody>
           </Table>
         </>
@@ -498,6 +707,8 @@ function App() {
 
   return (
     <>
+      {/* <br />
+      <Test /> */}
       <div style={{ maxWidth: "1366px", margin: "auto" }}>
         <Grid
           container
@@ -535,7 +746,7 @@ function App() {
                   // label="Year only"
                   value={value}
                   onChange={(newValue) => {
-                    console.log("newValue", dayjs(newValue).format("YYYY"));
+                    // console.log("newValue", dayjs(newValue).format("YYYY"));
                     setCurrentYear(dayjs(newValue).format("YYYY"));
                     setValue(newValue);
                   }}
@@ -571,7 +782,6 @@ function App() {
                       {InputProps?.endAdornment}
                     </Box>
                   )}
-                 
                 />
               </LocalizationProvider>
             </div>
@@ -601,22 +811,24 @@ function App() {
                   onClick={() => changeMenu("Govt. Holidays")}
                 >
                   <p className={classes.holidayCardTitle}> Govt. Holidays</p>
-                  <p className={classes.holidayCardDays}>{Holidays.length}</p>
+                  <p className={classes.holidayCardDays}>
+                    {newHolidays.length}
+                  </p>
                 </div>
               </Grid>
               <Grid item xs={12}>
                 <div
                   className={`${classes.holidayCard} ${
-                    active === "Attendance Summary" && classes.activeStyle
+                    active === "Present" && classes.activeStyle
                   }`}
-                  onClick={() => changeMenu("Attendance Summary")}
+                  onClick={() => changeMenu("Present")}
                 >
                   <p className={classes.holidayCardTitle}>
                     {" "}
                     Attendance Summary
                   </p>
                   <p className={classes.holidayCardDays}>
-                    {AttendanceSummary.length}
+                    {newAttendanceSummary.length}
                   </p>
                 </div>
               </Grid>
@@ -699,69 +911,42 @@ function App() {
               <Grid item xs={12}>
                 <div className={classes.holidayCard}>
                   <p className={classes.holidayCardTitle}> Events</p>
-                  <Accordion
-                    expanded={expanded === "panel1"}
-                    onChange={handleChange("panel1")}
-                  >
-                    <AccordionSummary
-                      aria-controls="panel1d-content"
-                      id="panel1d-header"
+                  {officeEvent?.map((item, i) => (
+                    <Accordion
+                      key={i}
+                      expanded={expanded === i}
+                      onChange={handleChange(i)}
                     >
-                      <Typography>Annual Tour</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography
-                        variant="body2"
-                        style={{ fontFamily: "'Lato', sans-serif" }}
+                      <AccordionSummary
+                        aria-controls="panel1d-content"
+                        id="panel1d-header"
                       >
-                        Lorem Ipsum is simply dummy text of the printing and
-                        typesetting industry. Lorem Ipsum has been the
-                        industry's standard dummy text ever since the 1600s
-                      </Typography>
-                    </AccordionDetails>
-                  </Accordion>
-                  <Accordion
-                    expanded={expanded === "panel2"}
-                    onChange={handleChange("panel2")}
-                  >
-                    <AccordionSummary
-                      aria-controls="panel2d-content"
-                      id="panel2d-header"
-                    >
-                      <Typography>Anniversary Celebration</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography
-                        variant="body2"
-                        style={{ fontFamily: "'Lato', sans-serif" }}
-                      >
-                        Lorem Ipsum is simply dummy text of the printing and
-                        typesetting industry. Lorem Ipsum has been the
-                        industry's standard dummy text ever since the 1500s
-                      </Typography>
-                    </AccordionDetails>
-                  </Accordion>
-                  <Accordion
-                    expanded={expanded === "panel3"}
-                    onChange={handleChange("panel3")}
-                  >
-                    <AccordionSummary
-                      aria-controls="panel3d-content"
-                      id="panel3d-header"
-                    >
-                      <Typography>Office Day-Out</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography
-                        variant="body2"
-                        style={{ fontFamily: "'Lato', sans-serif" }}
-                      >
-                        Lorem Ipsum is simply dummy text of the printing and
-                        typesetting industry. Lorem Ipsum has been the
-                        industry's standard dummy text ever since the 1500s
-                      </Typography>
-                    </AccordionDetails>
-                  </Accordion>
+                        <Typography>{item?.title}</Typography>
+
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 500,
+                            position: "absolute",
+                            bottom: -3,
+                          }}
+                        >
+                          {moment(item?.date, "DD-MM-YYYY").format(
+                            "DD MMM, YYYY"
+                          )}
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography
+                          variant="body2"
+                          style={{ fontFamily: "'Lato', sans-serif" }}
+                        >
+                          {item?.description}
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
                 </div>
               </Grid>
             </Grid>
@@ -815,9 +1000,8 @@ function App() {
                                   ? weaklyHolidaysColor
                                   : mainColor,
                                 fontSize: "14px",
-                                cursor: "pointer",
+                                // cursor: "pointer",
                               }}
-                              onClick={() => selectedDate(i - skipNo + 1)}
                             >
                               {checkHoliday(i, skipNo, m, i - skipNo + 1)}
                             </Grid>
@@ -832,6 +1016,127 @@ function App() {
           </Grid>
         </Grid>
       </div>
+      {/* <Button variant="outlined" onClick={handleClickOpen}>
+        Open alert dialog
+      </Button> */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        {/* <DialogTitle id="alert-dialog-title" style={{ position: "relative" }}>
+          {"Use Google's location service?"}
+        
+        </DialogTitle> */}
+        <DialogContent>
+          <div style={{ position: "relative", padding: "15px" }}>
+            <IconButton
+              aria-label=""
+              style={{ position: "absolute", right: 0, top: -12 }}
+              onClick={handleClose}
+            >
+              <ClearIcon />
+            </IconButton>
+          </div>
+
+          <Box sx={{ minWidth: 300 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="demo-simple-select-label">Type</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                // variant="standard"
+                value={type}
+                label="Type"
+                onChange={handleTypeChange}
+              >
+                <MenuItem value="Govt. Holidays">Event</MenuItem>
+                <MenuItem value="Govt. Holidays">Govt. Holidays</MenuItem>
+                <MenuItem value="Present">Present</MenuItem>
+                <MenuItem value="Casual Leave">Casual Leave</MenuItem>
+                <MenuItem value="Medical Leave">Medical Leave</MenuItem>
+                <MenuItem value="Annual Leave">Annual Leave</MenuItem>
+                <MenuItem value="Annual Leave">Annual Leave</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+          <br />
+          <TextField
+            fullWidth
+            id="standard-basic"
+            label="Description"
+            // variant="standard"
+            multiline
+            rows={3}
+            size="small"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <br />
+          <br />
+          <TextField
+            fullWidth
+            id="standard-basic"
+            label="Check-In"
+            // variant="standard"
+
+            size="small"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+          />
+          <br />
+          <br />
+          <TextField
+            fullWidth
+            id="standard-basic"
+            label="Check-Out"
+            // variant="standard"
+
+            size="small"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+          />
+          <br />
+          <br />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <TimePicker
+              label="Check-In"
+              value={checkIn}
+              onChange={handleCheckInChange}
+              renderInput={(params) => (
+                <TextField {...params} fullWidth size="small" />
+              )}
+            />
+            <br />
+            <br />
+            <TimePicker
+              label="Check-Out"
+              value={checkOut}
+              onChange={handleCheckOutChange}
+              renderInput={(params) => (
+                <TextField {...params} fullWidth size="small" />
+              )}
+            />
+          </LocalizationProvider>
+          <br />
+          <br />
+          <Button
+            onClick={addEvents}
+            fullWidth
+            variant="contained"
+            disableElevation
+          >
+            Submit
+          </Button>
+        </DialogContent>
+        <DialogActions>
+          {/* <Button onClick={handleClose}>Disagree</Button> */}
+          {/* <Button onClick={handleClose} fullWidth autoFocus variant="contained">
+            Submit
+          </Button> */}
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
