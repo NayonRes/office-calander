@@ -30,6 +30,7 @@ import Stack from "@mui/material/Stack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { StaticDateRangePicker } from "@mui/x-date-pickers-pro/StaticDateRangePicker";
 import { IconButton } from "@mui/material";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import Test from "./Test";
@@ -209,16 +210,24 @@ function App() {
   const [editYear, setEditYear] = useState(false);
   const [value, setValue] = React.useState(dayjs(new Date()));
   const [type, setType] = React.useState("");
-  const [checkIn, setCheckIn] = useState(dayjs("2014-08-18T21:11:54"));
-  const [checkOut, setCheckOut] = useState(dayjs("2014-08-18T21:11:54"));
+  const [title, setTitle] = useState("");
+  const [checkIn, setCheckIn] = useState(dayjs("2014-08-18T9:00:00"));
+  const [checkOut, setCheckOut] = useState(dayjs("2014-08-18T19:00:00"));
+  const [userCheckIn, setUserCheckIn] = useState(
+    dayjs("2014-08-18T9:00:00").format("HH:mm")
+  );
+  const [userCheckOut, setUserCheckOut] = useState(
+    dayjs("2014-08-18T19:00:00").format("HH:mm")
+  );
   const [description, setDescription] = useState("");
   const [selectDateData, setSelectDateData] = useState({});
-
+  const [dateRange, setDateRange] = React.useState([null, null]);
   const handleCheckInChange = (newValue) => {
-    console.log("newValue", dayjs(newValue).format('HH:mm'));
+    setUserCheckIn(dayjs(newValue).format("HH:mm"));
     setCheckIn(newValue);
   };
   const handleCheckOutChange = (newValue) => {
+    setUserCheckOut(dayjs(newValue).format("HH:mm"));
     setCheckOut(newValue);
   };
   const addEvents = () => {
@@ -237,8 +246,8 @@ function App() {
           monthName: selectDateData.monthName,
           day: selectDateData.day,
           year: currentYear,
-          checkIn: checkIn,
-          checkOut: checkOut,
+          checkIn: userCheckIn,
+          checkOut: userCheckOut,
           type: type,
           description: description,
         });
@@ -255,7 +264,17 @@ function App() {
           type: type,
           description: type,
         });
-        changeMenu("Casual Leave");
+        changeMenu("Casual Leaves");
+        break;
+      case "Events":
+        officeEvent.push({
+          date: selectDateData.date,
+          monthName: selectDateData.monthName,
+          day: selectDateData.day,
+          title: title,
+          description: description,
+        });
+        changeMenu("Events");
         break;
 
       default:
@@ -1051,7 +1070,7 @@ function App() {
                 label="Type"
                 onChange={handleTypeChange}
               >
-                <MenuItem value="Govt. Holidays">Event</MenuItem>
+                <MenuItem value="Events">Event</MenuItem>
                 <MenuItem value="Govt. Holidays">Govt. Holidays</MenuItem>
                 <MenuItem value="Present">Present</MenuItem>
                 <MenuItem value="Casual Leave">Casual Leave</MenuItem>
@@ -1062,32 +1081,20 @@ function App() {
             </FormControl>
           </Box>
           <br />
+
           <TextField
             fullWidth
             id="standard-basic"
-            label="Description"
-            // variant="standard"
-            multiline
-            rows={3}
-            size="small"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <br />
-          <br />
-          <TextField
-            fullWidth
-            id="standard-basic"
-            label="Check-In"
+            label="Title"
             // variant="standard"
 
             size="small"
-            value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
           <br />
           <br />
-          <TextField
+          {/* <TextField
             fullWidth
             id="standard-basic"
             label="Check-Out"
@@ -1098,7 +1105,7 @@ function App() {
             onChange={(e) => setCheckOut(e.target.value)}
           />
           <br />
-          <br />
+          <br /> */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimePicker
               label="Check-In"
@@ -1119,6 +1126,37 @@ function App() {
               )}
             />
           </LocalizationProvider>
+          <br />
+          <br />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <StaticDateRangePicker
+              displayStaticWrapperAs="desktop"
+              value={dateRange}
+              onChange={(newValue) => {
+                setDateRange(newValue);
+              }}
+              renderInput={(startProps, endProps) => (
+                <React.Fragment>
+                  <TextField {...startProps} />
+                  <Box sx={{ mx: 2 }}> to </Box>
+                  <TextField {...endProps} />
+                </React.Fragment>
+              )}
+            />
+          </LocalizationProvider>
+          <br />
+          <br />
+          <TextField
+            fullWidth
+            id="standard-basic"
+            label="Description"
+            // variant="standard"
+            multiline
+            rows={3}
+            size="small"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
           <br />
           <br />
           <Button
