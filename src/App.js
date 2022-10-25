@@ -30,7 +30,6 @@ import Stack from "@mui/material/Stack";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { StaticDateRangePicker } from "@mui/x-date-pickers-pro/StaticDateRangePicker";
 import { IconButton } from "@mui/material";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import Test from "./Test";
@@ -45,6 +44,10 @@ import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { addDays } from "date-fns";
+import "react-date-range/dist/styles.css"; // main css file
+import "react-date-range/dist/theme/default.css"; // theme css file
+import { DateRangePicker } from "react-date-range";
 const LightTooltip = styled(({ className, ...props }) => (
   <Tooltip
     placement="top"
@@ -221,7 +224,13 @@ function App() {
   );
   const [description, setDescription] = useState("");
   const [selectDateData, setSelectDateData] = useState({});
-  const [dateRange, setDateRange] = React.useState([null, null]);
+  const [state, setState] = useState([
+    {
+      startDate: new Date(),
+      endDate: addDays(new Date(), 0),
+      key: "selection",
+    },
+  ]);
   const handleCheckInChange = (newValue) => {
     setUserCheckIn(dayjs(newValue).format("HH:mm"));
     setCheckIn(newValue);
@@ -231,6 +240,9 @@ function App() {
     setCheckOut(newValue);
   };
   const addEvents = () => {
+    let obj = newAttendanceSummary.find((o) => o.date === selectDateData.date);
+    console.log("obj", obj);
+    console.log("selectDateData", selectDateData);
     switch (type) {
       case "Govt. Holidays":
         newHolidays.push({
@@ -241,31 +253,104 @@ function App() {
         });
         break;
       case "Present":
-        newAttendanceSummary.push({
-          date: selectDateData.date,
-          monthName: selectDateData.monthName,
-          day: selectDateData.day,
-          year: currentYear,
-          checkIn: userCheckIn,
-          checkOut: userCheckOut,
-          type: type,
-          description: description,
-        });
+        if (obj?.date?.length > 0) {
+          newAttendanceSummary.map((e, i) => {
+            if (e.date === obj.date) {
+              e.checkIn = userCheckIn;
+              e.checkOut = userCheckOut;
+              e.type = type;
+              e.description = "";
+            }
+          });
+        } else {
+          newAttendanceSummary.push({
+            date: selectDateData.date,
+            monthName: selectDateData.monthName,
+            day: selectDateData.day,
+            year: currentYear,
+            checkIn: userCheckIn,
+            checkOut: userCheckOut,
+            type: type,
+            description: description,
+          });
+        }
         changeMenu("Present");
         break;
       case "Casual Leave":
-        newAttendanceSummary.push({
-          date: selectDateData.date,
-          monthName: selectDateData.monthName,
-          day: selectDateData.day,
-          year: currentYear,
-          checkIn: "",
-          checkOut: "",
-          type: type,
-          description: type,
-        });
+        if (obj?.date?.length > 0) {
+          newAttendanceSummary.map((e, i) => {
+            if (e.date === obj.date) {
+              e.checkIn = "";
+              e.checkOut = "";
+              e.type = type;
+              e.description = "";
+            }
+          });
+        } else {
+          newAttendanceSummary.push({
+            date: selectDateData.date,
+            monthName: selectDateData.monthName,
+            day: selectDateData.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: type,
+            description: type,
+          });
+        }
         changeMenu("Casual Leaves");
         break;
+
+      case "Medical Leave":
+        if (obj?.date?.length > 0) {
+          newAttendanceSummary.map((e, i) => {
+            if (e.date === obj.date) {
+              e.checkIn = "";
+              e.checkOut = "";
+              e.type = type;
+              e.description = "";
+            }
+          });
+        } else {
+          newAttendanceSummary.push({
+            date: selectDateData.date,
+            monthName: selectDateData.monthName,
+            day: selectDateData.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: type,
+            description: type,
+          });
+        }
+        changeMenu("Medical Leaves");
+        break;
+
+      case "Annual Leave":
+        if (obj?.date?.length > 0) {
+          newAttendanceSummary.map((e, i) => {
+            if (e.date === obj.date) {
+              e.checkIn = "";
+              e.checkOut = "";
+              e.type = type;
+              e.description = "";
+            }
+          });
+        } else {
+          newAttendanceSummary.push({
+            date: selectDateData.date,
+            monthName: selectDateData.monthName,
+            day: selectDateData.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: type,
+            description: type,
+          });
+        }
+        changeMenu("Annual Leaves");
+        break;
+
       case "Events":
         officeEvent.push({
           date: selectDateData.date,
@@ -290,7 +375,7 @@ function App() {
   const totalCasualLeave = 10;
   const totalMediacalLeave = 10;
   const totalAnnualLeave = 20;
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -422,7 +507,7 @@ function App() {
     ];
   }, []);
   const handleSelectedDate = (date) => {
-    console.log("date", date);
+    console.log("active", active);
     let newDay = date.day;
     if (parseInt(date.day) < 10) {
       newDay = `0${newDay}`;
@@ -432,9 +517,101 @@ function App() {
       monthName: date.month.name,
       day: date.day,
     };
-    console.log("data", data);
     setSelectDateData(data);
-    handleClickOpen();
+
+    let obj = newAttendanceSummary.find((o) => o.date === data.date);
+    switch (active) {
+      case "Casual Leaves":
+        if (obj?.type?.length > 0) {
+          if (obj?.type === "Casual Leave") {
+            handleClickOpen();
+          } else {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = "Casual Leave";
+                e.description = "Casual Leave";
+              }
+            });
+          }
+        } else {
+          newAttendanceSummary.push({
+            date: data.date,
+            monthName: data.monthName,
+            day: data.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: "Casual Leave",
+            description: "Casual Leave",
+          });
+        }
+
+        changeMenu("Casual Leaves");
+        break;
+      case "Medical Leaves":
+        if (obj?.type?.length > 0) {
+          if (obj?.type === "Medical Leave") {
+            handleClickOpen();
+          } else {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = "Medical Leave";
+                e.description = "Medical Leave";
+              }
+            });
+          }
+        } else {
+          newAttendanceSummary.push({
+            date: data.date,
+            monthName: data.monthName,
+            day: data.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: "Medical Leave",
+            description: "Medical Leave",
+          });
+        }
+        changeMenu("Medical Leaves");
+        break;
+      case "Annual Leaves":
+        if (obj?.type?.length > 0) {
+          if (obj?.type === "Annual Leave") {
+            handleClickOpen();
+          } else {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = "Annual Leave";
+                e.description = "Annual Leave";
+              }
+            });
+          }
+        } else {
+          newAttendanceSummary.push({
+            date: data.date,
+            monthName: data.monthName,
+            day: data.day,
+            year: currentYear,
+            checkIn: "",
+            checkOut: "",
+            type: "Annual Leave",
+            description: "Annual Leave",
+          });
+        }
+        changeMenu("Annual Leaves");
+        break;
+
+      default:
+        handleClickOpen();
+        break;
+    }
+    console.log("date", date);
   };
   const calculateCasualLeaves = () => {
     let remain =
@@ -672,50 +849,6 @@ function App() {
                   )}
                 </TableCell>
               </TableRow>
-              {/* <TableRow>
-                <TableCell align="left">
-                  Check-In <br />
-                  (10:30)
-                </TableCell>
-                <TableCell align="left">{obj?.checkIn}</TableCell>
-                <TableCell align="left">
-                  {" "}
-                  <button
-                    disabled
-                    className={
-                      isLate
-                        ? classes.errorButtonStyle
-                        : classes.successButtonStyle
-                    }
-                  >
-                    {isLate ? "Late" : "In-Time"}
-                  </button>
-                </TableCell>
-              </TableRow> */}
-              {/* <TableRow>
-                <TableCell align="left">Check-Out (19:00) </TableCell>
-                <TableCell align="left">{obj?.checkOut}</TableCell>
-                <TableCell align="left"></TableCell>
-              </TableRow> */}
-              {/* <TableRow>
-                <TableCell align="left"> Work Duration (8:30 hours)</TableCell>
-                <TableCell align="left">
-                  {hourDiff}:{minDiff} hours
-                </TableCell>
-                <TableCell align="left">
-                  {" "}
-                  <button
-                    disabled
-                    className={
-                      isCompletedWorkingHours
-                        ? classes.successButtonStyle
-                        : classes.errorButtonStyle
-                    }
-                  >
-                    {isCompletedWorkingHours ? "Complete" : "Not Complete"}
-                  </button>
-                </TableCell>
-              </TableRow> */}
             </TableBody>
           </Table>
         </>
@@ -1043,6 +1176,7 @@ function App() {
         onClose={handleClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
+        maxWidth="xl"
       >
         {/* <DialogTitle id="alert-dialog-title" style={{ position: "relative" }}>
           {"Use Google's location service?"}
@@ -1076,76 +1210,77 @@ function App() {
                 <MenuItem value="Casual Leave">Casual Leave</MenuItem>
                 <MenuItem value="Medical Leave">Medical Leave</MenuItem>
                 <MenuItem value="Annual Leave">Annual Leave</MenuItem>
-                <MenuItem value="Annual Leave">Annual Leave</MenuItem>
               </Select>
             </FormControl>
           </Box>
           <br />
+          {/* {active !== "Govt. Holidays" && ( */}
+          <>
+            <TextField
+              fullWidth
+              id="standard-basic"
+              label="Title"
+              // variant="standard"
 
-          <TextField
-            fullWidth
-            id="standard-basic"
-            label="Title"
-            // variant="standard"
-
-            size="small"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <br />
-          <br />
-          {/* <TextField
-            fullWidth
-            id="standard-basic"
-            label="Check-Out"
-            // variant="standard"
-
-            size="small"
-            value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-          />
-          <br />
-          <br /> */}
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <TimePicker
-              label="Check-In"
-              value={checkIn}
-              onChange={handleCheckInChange}
-              renderInput={(params) => (
-                <TextField {...params} fullWidth size="small" />
-              )}
+              size="small"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
             <br />
             <br />
-            <TimePicker
-              label="Check-Out"
-              value={checkOut}
-              onChange={handleCheckOutChange}
-              renderInput={(params) => (
-                <TextField {...params} fullWidth size="small" />
-              )}
-            />
-          </LocalizationProvider>
-          <br />
-          <br />
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <StaticDateRangePicker
-              displayStaticWrapperAs="desktop"
-              value={dateRange}
-              onChange={(newValue) => {
-                setDateRange(newValue);
-              }}
-              renderInput={(startProps, endProps) => (
-                <React.Fragment>
-                  <TextField {...startProps} />
-                  <Box sx={{ mx: 2 }}> to </Box>
-                  <TextField {...endProps} />
-                </React.Fragment>
-              )}
-            />
-          </LocalizationProvider>
-          <br />
-          <br />
+          </>
+          {/* )} */}
+
+          {/* {active === "Present" && ( */}
+          <>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <TimePicker
+                label="Check-In"
+                value={checkIn}
+                onChange={handleCheckInChange}
+                renderInput={(params) => (
+                  <TextField {...params} fullWidth size="small" />
+                )}
+              />
+              <br />
+              <br />
+              <TimePicker
+                label="Check-Out"
+                value={checkOut}
+                onChange={handleCheckOutChange}
+                renderInput={(params) => (
+                  <TextField {...params} fullWidth size="small" />
+                )}
+              />
+            </LocalizationProvider>
+            <br />
+            <br />
+          </>
+          {/* )} */}
+          {/* <DateRangePicker
+            onChange={(item) => {
+              console.log("item", item.selection);
+              console.log("my data", {
+                checkData: dayjs(item.selection.startDate).format("DD-MM-YYYY"),
+                date: "06-03-2022",
+                monthName: "March",
+                day: 6,
+                year: "2022",
+                checkIn: "",
+                checkOut: "",
+                type: "Medical Leave",
+                description: "Medical Leave",
+              });
+              setState([item.selection]);
+            }}
+            editableDateInputs={true}
+            showSelectionPreview={true}
+            moveRangeOnFirstSelection={false}
+            months={2}
+            ranges={state}
+            direction="horizontal"
+          /> */}
+
           <TextField
             fullWidth
             id="standard-basic"

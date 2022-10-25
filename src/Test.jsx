@@ -1,23 +1,32 @@
-import * as React from "react";
-
-import TextField from "@mui/material/TextField";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import React, { useState } from "react";
+import { addDays } from "date-fns";
+import "react-date-range/dist/styles.css"; // main css file
+import "react-date-range/dist/theme/default.css"; // theme css file
+import { DateRangePicker } from "react-date-range";
 
 export default function Test() {
-  const [value, setValue] = React.useState("10/13/2010");
+  const [state, setState] = useState([
+    {
+      startDate: new Date(),
+      endDate: addDays(new Date(), 0),
+      key: "selection",
+    },
+  ]);
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        label="Basic example"
-        value={value}
-        onChange={(newValue) => {
-          setValue(newValue);
+    <>
+      <DateRangePicker
+        onChange={(item) => {
+          console.log("item", item);
+          setState([item.selection]);
         }}
-        renderInput={(params) => <TextField {...params} />}
+        editableDateInputs={true}
+        showSelectionPreview={true}
+        moveRangeOnFirstSelection={false}
+        months={2}
+        ranges={state}
+        direction="horizontal"
       />
-    </LocalizationProvider>
+    </>
   );
 }
