@@ -514,7 +514,7 @@ function MyCalendar() {
     ];
   }, []);
   const handleSelectedDate = (date) => {
-    console.log("active", active);
+    console.log("active 132132", active);
     let newDay = date.day;
     if (parseInt(date.day) < 10) {
       newDay = `0${newDay}`;
@@ -529,23 +529,25 @@ function MyCalendar() {
     let obj = newAttendanceSummary.find((o) => o.date === data.date);
     switch (active) {
       case "Casual Leaves":
-        console.log("parseInt(calculateCasualLeaves()",parseInt(calculateCasualLeaves()))
-       
-          if (obj?.type?.length > 0) {
-            if (obj?.type === "Casual Leave") {
-              handleClickOpen();
-            } else {
-              newAttendanceSummary.map((e, i) => {
-                if (e.date === obj.date) {
-                  e.checkIn = "";
-                  e.checkOut = "";
-                  e.type = "Casual Leave";
-                  e.description = "Casual Leave";
-                }
-              });
-            }
+        console.log(
+          "parseInt(calculateCasualLeaves()",
+          parseInt(calculateCasualLeaves())
+        );
+        if (obj?.type?.length > 0 && obj?.type === "Casual Leave") {
+          handleClickOpen();
+        } else if (parseInt(calculateCasualLeaves()) < 1) {
+          handleSnakbarOpen("Your casual leave is over", "error");
+        } else if (parseInt(calculateCasualLeaves()) > 0) {
+          if (obj?.type?.length > 0 && obj?.type !== "Casual Leave") {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = "Casual Leave";
+                e.description = "Casual Leave";
+              }
+            });
           } else {
-            if (parseInt(calculateCasualLeaves()) > 0) {
             newAttendanceSummary.push({
               date: data.date,
               monthName: data.monthName,
@@ -557,10 +559,38 @@ function MyCalendar() {
               description: "Casual Leave",
             });
           }
-          else {
-            handleSnakbarOpen("Your casual leave is over", "error");
-          }
         }
+
+        //  =================================================================
+        // if (obj?.type?.length > 0 ) {
+        //   if (obj?.type === "Casual Leave") {
+        //     handleClickOpen();
+        //   } else {
+        //     newAttendanceSummary.map((e, i) => {
+        //       if (e.date === obj.date) {
+        //         e.checkIn = "";
+        //         e.checkOut = "";
+        //         e.type = "Casual Leave";
+        //         e.description = "Casual Leave";
+        //       }
+        //     });
+        //   }
+        // }
+        // else if (parseInt(calculateCasualLeaves()) > 0) {
+        //   newAttendanceSummary.push({
+        //     date: data.date,
+        //     monthName: data.monthName,
+        //     day: data.day,
+        //     year: currentYear,
+        //     checkIn: "",
+        //     checkOut: "",
+        //     type: "Casual Leave",
+        //     description: "Casual Leave",
+        //   });
+        // }
+        // else {
+        //   handleSnakbarOpen("Your casual leave is over", "error");
+        // }
 
         changeMenu("Casual Leaves");
         break;
