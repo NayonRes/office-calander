@@ -513,6 +513,37 @@ function MyCalendar() {
       new Date().getDay()
     ];
   }, []);
+
+  const addLeaves = (data, obj, type, leaveDays) => {
+    console.log("leaveDays", leaveDays);
+    if (obj?.type?.length > 0 && obj?.type === type) {
+      handleClickOpen();
+    } else if (leaveDays < 1) {
+      handleSnakbarOpen(`Your ${type.toLowerCase()} is over`, "error");
+    } else if (leaveDays > 0) {
+      if (obj?.type?.length > 0 && obj?.type !== type) {
+        newAttendanceSummary.map((e, i) => {
+          if (e.date === obj.date) {
+            e.checkIn = "";
+            e.checkOut = "";
+            e.type = type;
+            e.description = type;
+          }
+        });
+      } else {
+        newAttendanceSummary.push({
+          date: data.date,
+          monthName: data.monthName,
+          day: data.day,
+          year: currentYear,
+          checkIn: "",
+          checkOut: "",
+          type: type,
+          description: type,
+        });
+      }
+    }
+  };
   const handleSelectedDate = (date) => {
     console.log("active 132132", active);
     let newDay = date.day;
@@ -533,39 +564,14 @@ function MyCalendar() {
           "parseInt(calculateCasualLeaves()",
           parseInt(calculateCasualLeaves())
         );
-        if (obj?.type?.length > 0 && obj?.type === "Casual Leave") {
-          handleClickOpen();
-        } else if (parseInt(calculateCasualLeaves()) < 1) {
-          handleSnakbarOpen("Your casual leave is over", "error");
-        } else if (parseInt(calculateCasualLeaves()) > 0) {
-          if (obj?.type?.length > 0 && obj?.type !== "Casual Leave") {
-            newAttendanceSummary.map((e, i) => {
-              if (e.date === obj.date) {
-                e.checkIn = "";
-                e.checkOut = "";
-                e.type = "Casual Leave";
-                e.description = "Casual Leave";
-              }
-            });
-          } else {
-            newAttendanceSummary.push({
-              date: data.date,
-              monthName: data.monthName,
-              day: data.day,
-              year: currentYear,
-              checkIn: "",
-              checkOut: "",
-              type: "Casual Leave",
-              description: "Casual Leave",
-            });
-          }
-        }
-
-        //  =================================================================
-        // if (obj?.type?.length > 0 ) {
-        //   if (obj?.type === "Casual Leave") {
-        //     handleClickOpen();
-        //   } else {
+        let casualLeaveDays = parseInt(calculateCasualLeaves());
+        addLeaves(data, obj, "Casual Leave", casualLeaveDays);
+        // if (obj?.type?.length > 0 && obj?.type === "Casual Leave") {
+        //   handleClickOpen();
+        // } else if (parseInt(calculateCasualLeaves()) < 1) {
+        //   handleSnakbarOpen("Your casual leave is over", "error");
+        // } else if (parseInt(calculateCasualLeaves()) > 0) {
+        //   if (obj?.type?.length > 0 && obj?.type !== "Casual Leave") {
         //     newAttendanceSummary.map((e, i) => {
         //       if (e.date === obj.date) {
         //         e.checkIn = "";
@@ -574,9 +580,39 @@ function MyCalendar() {
         //         e.description = "Casual Leave";
         //       }
         //     });
+        //   } else {
+        //     newAttendanceSummary.push({
+        //       date: data.date,
+        //       monthName: data.monthName,
+        //       day: data.day,
+        //       year: currentYear,
+        //       checkIn: "",
+        //       checkOut: "",
+        //       type: "Casual Leave",
+        //       description: "Casual Leave",
+        //     });
         //   }
         // }
-        // else if (parseInt(calculateCasualLeaves()) > 0) {
+
+        changeMenu("Casual Leaves");
+        break;
+      case "Medical Leaves":
+        let medicalLeaveDays = parseInt(calculateMedicalLeaves());
+        addLeaves(data, obj, "Medical Leave", medicalLeaveDays);
+        // if (obj?.type?.length > 0) {
+        //   if (obj?.type === "Medical Leave") {
+        //     handleClickOpen();
+        //   } else {
+        //     newAttendanceSummary.map((e, i) => {
+        //       if (e.date === obj.date) {
+        //         e.checkIn = "";
+        //         e.checkOut = "";
+        //         e.type = "Medical Leave";
+        //         e.description = "Medical Leave";
+        //       }
+        //     });
+        //   }
+        // } else {
         //   newAttendanceSummary.push({
         //     date: data.date,
         //     monthName: data.monthName,
@@ -584,70 +620,40 @@ function MyCalendar() {
         //     year: currentYear,
         //     checkIn: "",
         //     checkOut: "",
-        //     type: "Casual Leave",
-        //     description: "Casual Leave",
+        //     type: "Medical Leave",
+        //     description: "Medical Leave",
         //   });
         // }
-        // else {
-        //   handleSnakbarOpen("Your casual leave is over", "error");
-        // }
-
-        changeMenu("Casual Leaves");
-        break;
-      case "Medical Leaves":
-        if (obj?.type?.length > 0) {
-          if (obj?.type === "Medical Leave") {
-            handleClickOpen();
-          } else {
-            newAttendanceSummary.map((e, i) => {
-              if (e.date === obj.date) {
-                e.checkIn = "";
-                e.checkOut = "";
-                e.type = "Medical Leave";
-                e.description = "Medical Leave";
-              }
-            });
-          }
-        } else {
-          newAttendanceSummary.push({
-            date: data.date,
-            monthName: data.monthName,
-            day: data.day,
-            year: currentYear,
-            checkIn: "",
-            checkOut: "",
-            type: "Medical Leave",
-            description: "Medical Leave",
-          });
-        }
         changeMenu("Medical Leaves");
         break;
       case "Annual Leaves":
-        if (obj?.type?.length > 0) {
-          if (obj?.type === "Annual Leave") {
-            handleClickOpen();
-          } else {
-            newAttendanceSummary.map((e, i) => {
-              if (e.date === obj.date) {
-                e.checkIn = "";
-                e.checkOut = "";
-                e.type = "Annual Leave";
-                e.description = "Annual Leave";
-              }
-            });
-          }
-        } else {
-          newAttendanceSummary.push({
-            date: data.date,
-            monthName: data.monthName,
-            day: data.day,
-            year: currentYear,
-            checkIn: "",
-            checkOut: "",
-            type: "Annual Leave",
-            description: "Annual Leave",
-          });
-        }
+        let annualLeaveDays = parseInt(calculateMedicalLeaves());
+        addLeaves(data, obj, "Annual Leave", annualLeaveDays);
+        // if (obj?.type?.length > 0) {
+        //   if (obj?.type === "Annual Leave") {
+        //     handleClickOpen();
+        //   } else {
+        //     newAttendanceSummary.map((e, i) => {
+        //       if (e.date === obj.date) {
+        //         e.checkIn = "";
+        //         e.checkOut = "";
+        //         e.type = "Annual Leave";
+        //         e.description = "Annual Leave";
+        //       }
+        //     });
+        //   }
+        // } else {
+        //   newAttendanceSummary.push({
+        //     date: data.date,
+        //     monthName: data.monthName,
+        //     day: data.day,
+        //     year: currentYear,
+        //     checkIn: "",
+        //     checkOut: "",
+        //     type: "Annual Leave",
+        //     description: "Annual Leave",
+        //   });
+        // }
         changeMenu("Annual Leaves");
         break;
 
