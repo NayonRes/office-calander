@@ -201,11 +201,13 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 function MyCalendar() {
   // console.log("Holidays", Holidays);
   const classes = useStyles();
-
+  const totalCasualLeave = 10;
+  const totalMediacalLeave = 10;
+  const totalAnnualLeave = 20;
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [expanded, setExpanded] = React.useState("");
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [active, setActive] = useState("Govt. Holidays");
+  const [active, setActive] = useState("Govt. Holiday");
   const [newAttendanceSummary, setNewAttendanceSummary] =
     useState(AttendanceSummary);
   const [newHolidays, setNewHolidays] = useState(Holidays);
@@ -213,7 +215,7 @@ function MyCalendar() {
   const [userDays, setUserDays] = useState(Holidays);
   const [editYear, setEditYear] = useState(false);
   const [value, setValue] = React.useState(dayjs(new Date()));
-  const [type, setType] = React.useState("");
+  const [type, setType] = React.useState(active);
   const [title, setTitle] = useState("");
   const [checkIn, setCheckIn] = useState(dayjs("2014-08-18T9:00:00"));
   const [checkOut, setCheckOut] = useState(dayjs("2014-08-18T19:00:00"));
@@ -246,142 +248,175 @@ function MyCalendar() {
     setUserCheckOut(dayjs(newValue).format("HH:mm"));
     setCheckOut(newValue);
   };
+  const validation = () => {
+    let isError = false;
+
+    if (!type.trim()) {
+      handleSnakbarOpen("Please select event type", "error");
+      document.getElementById("type").focus();
+      return (isError = true);
+    }
+
+    return isError;
+  };
   const addEvents = () => {
-    let obj = newAttendanceSummary.find((o) => o.date === selectDateData.date);
-    console.log("obj", obj);
-    console.log("selectDateData", selectDateData);
-    switch (type) {
-      case "Govt. Holidays":
-        newHolidays.push({
-          date: selectDateData.date,
-          monthName: selectDateData.monthName,
-          day: selectDateData.day,
-          description: description,
-        });
-        break;
-      case "Present":
-        if (obj?.date?.length > 0) {
-          newAttendanceSummary.map((e, i) => {
-            if (e.date === obj.date) {
-              e.checkIn = userCheckIn;
-              e.checkOut = userCheckOut;
-              e.type = type;
-              e.description = "";
+    let err = validation();
+    if (err) {
+      return;
+    } else {
+      let obj = newAttendanceSummary.find(
+        (o) => o.date === selectDateData.date
+      );
+
+      switch (type) {
+        case "Govt. Holiday":
+          let holidaysObj = newHolidays.find(
+            (o) => o.date === selectDateData.date
+          );
+
+          if (description.trim().length < 1) {
+            handleSnakbarOpen("Please enter description", "error");
+            return document.getElementById("description").focus();
+          } else {
+            if (holidaysObj?.date?.length > 0) {
+              newHolidays?.map((e, i) => {
+                if (e.date === holidaysObj.date) {
+                  e.description = description;
+                }
+              });
+              setDescription("");
+            } else {
+              newHolidays.push({
+                date: selectDateData.date,
+                monthName: selectDateData.monthName,
+                day: selectDateData.day,
+                description: description,
+              });
+              setDescription("");
             }
-          });
-        } else {
-          newAttendanceSummary.push({
+          }
+          break;
+        case "Present":
+          if (obj?.date?.length > 0) {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = userCheckIn;
+                e.checkOut = userCheckOut;
+                e.type = type;
+                e.description = "";
+              }
+            });
+          } else {
+            newAttendanceSummary.push({
+              date: selectDateData.date,
+              monthName: selectDateData.monthName,
+              day: selectDateData.day,
+              year: currentYear,
+              checkIn: userCheckIn,
+              checkOut: userCheckOut,
+              type: type,
+              description: description,
+            });
+          }
+          changeMenu("Present");
+          break;
+        case "Casual Leave":
+          if (obj?.date?.length > 0) {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = type;
+                e.description = "";
+              }
+            });
+          } else {
+            newAttendanceSummary.push({
+              date: selectDateData.date,
+              monthName: selectDateData.monthName,
+              day: selectDateData.day,
+              year: currentYear,
+              checkIn: "",
+              checkOut: "",
+              type: type,
+              description: type,
+            });
+          }
+          changeMenu("Casual Leave");
+          break;
+
+        case "Medical Leave":
+          if (obj?.date?.length > 0) {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = type;
+                e.description = "";
+              }
+            });
+          } else {
+            newAttendanceSummary.push({
+              date: selectDateData.date,
+              monthName: selectDateData.monthName,
+              day: selectDateData.day,
+              year: currentYear,
+              checkIn: "",
+              checkOut: "",
+              type: type,
+              description: type,
+            });
+          }
+          changeMenu("Medical Leave");
+          break;
+
+        case "Annual Leave":
+          if (obj?.date?.length > 0) {
+            newAttendanceSummary.map((e, i) => {
+              if (e.date === obj.date) {
+                e.checkIn = "";
+                e.checkOut = "";
+                e.type = type;
+                e.description = "";
+              }
+            });
+          } else {
+            newAttendanceSummary.push({
+              date: selectDateData.date,
+              monthName: selectDateData.monthName,
+              day: selectDateData.day,
+              year: currentYear,
+              checkIn: "",
+              checkOut: "",
+              type: type,
+              description: type,
+            });
+          }
+          changeMenu("Annual Leave");
+          break;
+
+        case "Event":
+          officeEvent.push({
             date: selectDateData.date,
             monthName: selectDateData.monthName,
             day: selectDateData.day,
-            year: currentYear,
-            checkIn: userCheckIn,
-            checkOut: userCheckOut,
-            type: type,
+            title: title,
             description: description,
           });
-        }
-        changeMenu("Present");
-        break;
-      case "Casual Leave":
-        if (obj?.date?.length > 0) {
-          newAttendanceSummary.map((e, i) => {
-            if (e.date === obj.date) {
-              e.checkIn = "";
-              e.checkOut = "";
-              e.type = type;
-              e.description = "";
-            }
-          });
-        } else {
-          newAttendanceSummary.push({
-            date: selectDateData.date,
-            monthName: selectDateData.monthName,
-            day: selectDateData.day,
-            year: currentYear,
-            checkIn: "",
-            checkOut: "",
-            type: type,
-            description: type,
-          });
-        }
-        changeMenu("Casual Leaves");
-        break;
+          changeMenu("Event");
+          break;
 
-      case "Medical Leave":
-        if (obj?.date?.length > 0) {
-          newAttendanceSummary.map((e, i) => {
-            if (e.date === obj.date) {
-              e.checkIn = "";
-              e.checkOut = "";
-              e.type = type;
-              e.description = "";
-            }
-          });
-        } else {
-          newAttendanceSummary.push({
-            date: selectDateData.date,
-            monthName: selectDateData.monthName,
-            day: selectDateData.day,
-            year: currentYear,
-            checkIn: "",
-            checkOut: "",
-            type: type,
-            description: type,
-          });
-        }
-        changeMenu("Medical Leaves");
-        break;
-
-      case "Annual Leave":
-        if (obj?.date?.length > 0) {
-          newAttendanceSummary.map((e, i) => {
-            if (e.date === obj.date) {
-              e.checkIn = "";
-              e.checkOut = "";
-              e.type = type;
-              e.description = "";
-            }
-          });
-        } else {
-          newAttendanceSummary.push({
-            date: selectDateData.date,
-            monthName: selectDateData.monthName,
-            day: selectDateData.day,
-            year: currentYear,
-            checkIn: "",
-            checkOut: "",
-            type: type,
-            description: type,
-          });
-        }
-        changeMenu("Annual Leaves");
-        break;
-
-      case "Events":
-        officeEvent.push({
-          date: selectDateData.date,
-          monthName: selectDateData.monthName,
-          day: selectDateData.day,
-          title: title,
-          description: description,
-        });
-        changeMenu("Events");
-        break;
-
-      default:
-        break;
+        default:
+          break;
+      }
+      handleClose();
     }
-    handleClose();
   };
 
   const handleTypeChange = (event) => {
     setType(event.target.value);
   };
 
-  const totalCasualLeave = 10;
-  const totalMediacalLeave = 10;
-  const totalAnnualLeave = 20;
   const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
@@ -390,6 +425,7 @@ function MyCalendar() {
 
   const handleClose = () => {
     setOpen(false);
+    setDescription("");
   };
   const handleChange = (panel) => (event, newExpanded) => {
     setExpanded(newExpanded ? panel : false);
@@ -470,26 +506,27 @@ function MyCalendar() {
     },
   ];
   const changeMenu = (id) => {
-    if (id === "Govt. Holidays") {
+    if (id === "Govt. Holiday") {
       setUserDays(newHolidays);
     } else if (id === "Present") {
       setUserDays(
         newAttendanceSummary.filter((item) => item.type === "Present")
       );
-    } else if (id === "Casual Leaves") {
+    } else if (id === "Casual Leave") {
       setUserDays(
         newAttendanceSummary.filter((item) => item.type === "Casual Leave")
       );
-    } else if (id === "Medical Leaves") {
+    } else if (id === "Medical Leave") {
       setUserDays(
         newAttendanceSummary.filter((item) => item.type === "Medical Leave")
       );
-    } else if (id === "Annual Leaves") {
+    } else if (id === "Annual Leave") {
       setUserDays(
         newAttendanceSummary.filter((item) => item.type === "Annual Leave")
       );
     }
     setActive(id);
+    setType(id);
     // console.log("id", id);
   };
   const getFirstdayOfTheYear = () => {
@@ -544,8 +581,10 @@ function MyCalendar() {
       }
     }
   };
-  const handleSelectedDate = (date) => {
-    console.log("active 132132", active);
+  const handleSelectedDate = (date, holidayObj) => {
+    if (holidayObj.length > 0) {
+      setDescription(holidayObj[0]?.description);
+    }
     let newDay = date.day;
     if (parseInt(date.day) < 10) {
       newDay = `0${newDay}`;
@@ -556,105 +595,31 @@ function MyCalendar() {
       day: date.day,
     };
     setSelectDateData(data);
+    console.log("selectDateData", data);
 
     let obj = newAttendanceSummary.find((o) => o.date === data.date);
+    console.log("obj", obj);
     switch (active) {
-      case "Casual Leaves":
+      case "Casual Leave":
         console.log(
           "parseInt(calculateCasualLeaves()",
           parseInt(calculateCasualLeaves())
         );
         let casualLeaveDays = parseInt(calculateCasualLeaves());
         addLeaves(data, obj, "Casual Leave", casualLeaveDays);
-        // if (obj?.type?.length > 0 && obj?.type === "Casual Leave") {
-        //   handleClickOpen();
-        // } else if (parseInt(calculateCasualLeaves()) < 1) {
-        //   handleSnakbarOpen("Your casual leave is over", "error");
-        // } else if (parseInt(calculateCasualLeaves()) > 0) {
-        //   if (obj?.type?.length > 0 && obj?.type !== "Casual Leave") {
-        //     newAttendanceSummary.map((e, i) => {
-        //       if (e.date === obj.date) {
-        //         e.checkIn = "";
-        //         e.checkOut = "";
-        //         e.type = "Casual Leave";
-        //         e.description = "Casual Leave";
-        //       }
-        //     });
-        //   } else {
-        //     newAttendanceSummary.push({
-        //       date: data.date,
-        //       monthName: data.monthName,
-        //       day: data.day,
-        //       year: currentYear,
-        //       checkIn: "",
-        //       checkOut: "",
-        //       type: "Casual Leave",
-        //       description: "Casual Leave",
-        //     });
-        //   }
-        // }
-
-        changeMenu("Casual Leaves");
+        changeMenu("Casual Leave");
         break;
-      case "Medical Leaves":
+      case "Medical Leave":
         let medicalLeaveDays = parseInt(calculateMedicalLeaves());
         addLeaves(data, obj, "Medical Leave", medicalLeaveDays);
-        // if (obj?.type?.length > 0) {
-        //   if (obj?.type === "Medical Leave") {
-        //     handleClickOpen();
-        //   } else {
-        //     newAttendanceSummary.map((e, i) => {
-        //       if (e.date === obj.date) {
-        //         e.checkIn = "";
-        //         e.checkOut = "";
-        //         e.type = "Medical Leave";
-        //         e.description = "Medical Leave";
-        //       }
-        //     });
-        //   }
-        // } else {
-        //   newAttendanceSummary.push({
-        //     date: data.date,
-        //     monthName: data.monthName,
-        //     day: data.day,
-        //     year: currentYear,
-        //     checkIn: "",
-        //     checkOut: "",
-        //     type: "Medical Leave",
-        //     description: "Medical Leave",
-        //   });
-        // }
-        changeMenu("Medical Leaves");
+
+        changeMenu("Medical Leave");
         break;
-      case "Annual Leaves":
+      case "Annual Leave":
         let annualLeaveDays = parseInt(calculateMedicalLeaves());
         addLeaves(data, obj, "Annual Leave", annualLeaveDays);
-        // if (obj?.type?.length > 0) {
-        //   if (obj?.type === "Annual Leave") {
-        //     handleClickOpen();
-        //   } else {
-        //     newAttendanceSummary.map((e, i) => {
-        //       if (e.date === obj.date) {
-        //         e.checkIn = "";
-        //         e.checkOut = "";
-        //         e.type = "Annual Leave";
-        //         e.description = "Annual Leave";
-        //       }
-        //     });
-        //   }
-        // } else {
-        //   newAttendanceSummary.push({
-        //     date: data.date,
-        //     monthName: data.monthName,
-        //     day: data.day,
-        //     year: currentYear,
-        //     checkIn: "",
-        //     checkOut: "",
-        //     type: "Annual Leave",
-        //     description: "Annual Leave",
-        //   });
-        // }
-        changeMenu("Annual Leaves");
+
+        changeMenu("Annual Leave");
         break;
 
       default:
@@ -711,7 +676,10 @@ function MyCalendar() {
               cursor: "pointer",
             }}
             onClick={() =>
-              handleSelectedDate({ day: index - skipNo + 1, month: month })
+              handleSelectedDate(
+                { day: index - skipNo + 1, month: month },
+                holidayObj
+              )
             }
           >
             {skipNo <= index &&
@@ -730,17 +698,16 @@ function MyCalendar() {
           cursor: "pointer",
         }}
         onClick={() =>
-          handleSelectedDate({ day: index - skipNo + 1, month: month })
+          handleSelectedDate(
+            { day: index - skipNo + 1, month: month },
+            holidayObj
+          )
         }
       >
         {skipNo <= index && index - skipNo < month?.days && index - skipNo + 1}
       </div>
     );
   };
-  // const handleSelectedDate = (date) => {
-  //   console.log("date", date);
-
-  // };
 
   let skipNo = 0;
   const fnCheckTimes = (obj) => {
@@ -752,9 +719,7 @@ function MyCalendar() {
       let checkOut = obj?.checkOut;
       let checkIn = obj?.checkIn;
       let newCheckOut = checkOut.split(":");
-      // console.log("newCheckOut", newCheckOut);
       let newCheckIn = checkIn.split(":");
-      // console.log("newCheckIn", newCheckIn);
       let checkInTime = `${checkIn} AM`;
       let checkOutTime = `${checkOut} AM`;
 
@@ -803,8 +768,6 @@ function MyCalendar() {
       if (minDiff > 30) {
         minDeficiency = 30 + 60 - minDiff;
         hourDeficiency = 8 - 1 - hourDiff;
-
-        // {8-parseInt(hourDiff)}:{minDiff} hrs
       } else {
       }
       if (minDiff < 10) {
@@ -891,6 +854,7 @@ function MyCalendar() {
                           position: "absolute",
                           color: "#ee5253",
                           margin: 0,
+                          top: -18,
                         }}
                       >
                         Deficiency : {hourDeficiency}:{minDeficiency} hrs
@@ -1008,9 +972,9 @@ function MyCalendar() {
               <Grid item xs={12}>
                 <div
                   className={`${classes.holidayCard} ${
-                    active === "Govt. Holidays" && classes.activeStyle
+                    active === "Govt. Holiday" && classes.activeStyle
                   }`}
-                  onClick={() => changeMenu("Govt. Holidays")}
+                  onClick={() => changeMenu("Govt. Holiday")}
                 >
                   <p className={classes.holidayCardTitle}> Govt. Holidays</p>
                   <p className={classes.holidayCardDays}>
@@ -1037,9 +1001,9 @@ function MyCalendar() {
               <Grid item xs={12}>
                 <div
                   className={`${classes.holidayCard} ${
-                    active === "Casual Leaves" && classes.activeStyle
+                    active === "Casual Leave" && classes.activeStyle
                   }`}
-                  onClick={() => changeMenu("Casual Leaves")}
+                  onClick={() => changeMenu("Casual Leave")}
                 >
                   <p className={classes.holidayCardTitle}>Casual Leaves</p>
 
@@ -1062,9 +1026,9 @@ function MyCalendar() {
               <Grid item xs={12}>
                 <div
                   className={`${classes.holidayCard} ${
-                    active === "Medical Leaves" && classes.activeStyle
+                    active === "Medical Leave" && classes.activeStyle
                   }`}
-                  onClick={() => changeMenu("Medical Leaves")}
+                  onClick={() => changeMenu("Medical Leave")}
                 >
                   <p className={classes.holidayCardTitle}> Medical Leaves</p>
 
@@ -1087,9 +1051,9 @@ function MyCalendar() {
               <Grid item xs={12}>
                 <div
                   className={`${classes.holidayCard} ${
-                    active === "Annual Leaves" && classes.activeStyle
+                    active === "Annual Leave" && classes.activeStyle
                   }`}
-                  onClick={() => changeMenu("Annual Leaves")}
+                  onClick={() => changeMenu("Annual Leave")}
                 >
                   <p className={classes.holidayCardTitle}> Annual Leaves</p>
 
@@ -1228,12 +1192,32 @@ function MyCalendar() {
         aria-describedby="alert-dialog-description"
         maxWidth="xl"
       >
-        {/* <DialogTitle id="alert-dialog-title" style={{ position: "relative" }}>
-          {"Use Google's location service?"}
-        
-        </DialogTitle> */}
-        <DialogContent>
-          <div style={{ position: "relative", padding: "15px" }}>
+        <DialogTitle
+          id="alert-dialog-title"
+          style={{ position: "relative", color: "#1dd1a1" }}
+        >
+          {"Add Event"}
+          <IconButton
+            aria-label=""
+            style={{ position: "absolute", right: 16, top: 12 }}
+            onClick={handleClose}
+          >
+            <ClearIcon />
+          </IconButton>
+          <small
+            style={{
+              position: "absolute",
+              left: 24,
+              bottom: 4,
+              fontSize: "11px",
+              color: "#888f8d",
+            }}
+          >
+            {moment(selectDateData.date, "DD-MM-YYYY").format("DD MMM, YYYY")}
+          </small>
+        </DialogTitle>
+        <DialogContent style={{ paddingTop: "16px" }}>
+          {/* <div style={{ position: "relative", padding: "15px" }}>
             <IconButton
               aria-label=""
               style={{ position: "absolute", right: 0, top: -12 }}
@@ -1241,7 +1225,7 @@ function MyCalendar() {
             >
               <ClearIcon />
             </IconButton>
-          </div>
+          </div> */}
 
           <Box sx={{ minWidth: 300 }}>
             <FormControl fullWidth size="small">
@@ -1254,8 +1238,8 @@ function MyCalendar() {
                 label="Type"
                 onChange={handleTypeChange}
               >
-                <MenuItem value="Events">Event</MenuItem>
-                <MenuItem value="Govt. Holidays">Govt. Holidays</MenuItem>
+                <MenuItem value="Event">Event</MenuItem>
+                <MenuItem value="Govt. Holiday">Govt. Holiday</MenuItem>
                 <MenuItem value="Present">Present</MenuItem>
                 <MenuItem value="Casual Leave">Casual Leave</MenuItem>
                 <MenuItem value="Medical Leave">Medical Leave</MenuItem>
@@ -1264,91 +1248,70 @@ function MyCalendar() {
             </FormControl>
           </Box>
           <br />
-          {/* {active !== "Govt. Holidays" && ( */}
-          <>
-            <TextField
-              fullWidth
-              id="standard-basic"
-              label="Title"
-              // variant="standard"
-
-              size="small"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <br />
-            <br />
-          </>
-          {/* )} */}
-
-          {/* {active === "Present" && ( */}
-          <>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <TimePicker
-                label="Check-In"
-                value={checkIn}
-                onChange={handleCheckInChange}
-                renderInput={(params) => (
-                  <TextField {...params} fullWidth size="small" />
-                )}
+          {type === "Event" && (
+            <>
+              <TextField
+                fullWidth
+                id="standard-basic"
+                label="Title"
+                // variant="standard"
+                size="small"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
               <br />
               <br />
-              <TimePicker
-                label="Check-Out"
-                value={checkOut}
-                onChange={handleCheckOutChange}
-                renderInput={(params) => (
-                  <TextField {...params} fullWidth size="small" />
-                )}
+            </>
+          )}
+          {type === "Present" && (
+            <>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <TimePicker
+                  label="Check-In"
+                  value={checkIn}
+                  onChange={handleCheckInChange}
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth size="small" />
+                  )}
+                />
+                <br />
+                <br />
+                <TimePicker
+                  label="Check-Out"
+                  value={checkOut}
+                  onChange={handleCheckOutChange}
+                  renderInput={(params) => (
+                    <TextField {...params} fullWidth size="small" />
+                  )}
+                />
+              </LocalizationProvider>
+              <br />
+              <br />
+            </>
+          )}
+          {type === "Govt. Holiday" && (
+            <>
+              <TextField
+                fullWidth
+                id="description"
+                label="Description"
+                // variant="standard"
+                multiline
+                rows={3}
+                size="small"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
-            </LocalizationProvider>
-            <br />
-            <br />
-          </>
-          {/* )} */}
-          {/* <DateRangePicker
-            onChange={(item) => {
-              console.log("item", item.selection);
-              console.log("my data", {
-                checkData: dayjs(item.selection.startDate).format("DD-MM-YYYY"),
-                date: "06-03-2022",
-                monthName: "March",
-                day: 6,
-                year: "2022",
-                checkIn: "",
-                checkOut: "",
-                type: "Medical Leave",
-                description: "Medical Leave",
-              });
-              setState([item.selection]);
-            }}
-            editableDateInputs={true}
-            showSelectionPreview={true}
-            moveRangeOnFirstSelection={false}
-            months={2}
-            ranges={state}
-            direction="horizontal"
-          /> */}
-
-          <TextField
-            fullWidth
-            id="standard-basic"
-            label="Description"
-            // variant="standard"
-            multiline
-            rows={3}
-            size="small"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <br />
-          <br />
+              <br />
+              <br />
+            </>
+          )}
           <Button
             onClick={addEvents}
             fullWidth
             variant="contained"
             disableElevation
+            color="success"
           >
             Submit
           </Button>
