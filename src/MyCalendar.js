@@ -68,6 +68,11 @@ const LightTooltip = styled(({ className, ...props }) => (
   },
 }));
 const weaklyHolidaysColor = "#F5B041";
+const weaklyHolidaysBGColor = "#efc98d";
+const casualLeaveColor = "#AED6F1";
+const medialLeaveColor = "#A3E4D7";
+const annualLeaveColor = "#FAE5D3";
+const attendenceColor = "#dfdfdf";
 const useStyles = makeStyles({
   monthSection: {
     // border: "1px solid #ddd",
@@ -101,6 +106,15 @@ const useStyles = makeStyles({
     padding: " 15px 5px 15px",
     borderRadius: "10px",
     cursor: "pointer",
+    position: "relative",
+  },
+  cardColorIcon: {
+    position: "absolute",
+    height: "10px",
+    width: "10px",
+    borderRadius: "50%",
+    top: 18,
+    left: 11,
   },
   holidayCardTitle: {
     margin: "0px 0 8px 0",
@@ -241,6 +255,7 @@ function MyCalendar() {
     });
   };
   const handleCheckInChange = (newValue) => {
+    console.log("handleCheckInChange 111", dayjs(newValue).format("HH:mm"));
     setUserCheckIn(dayjs(newValue).format("HH:mm"));
     setCheckIn(newValue);
   };
@@ -297,26 +312,41 @@ function MyCalendar() {
           }
           break;
         case "Present":
-          if (obj?.date?.length > 0) {
-            newAttendanceSummary.map((e, i) => {
-              if (e.date === obj.date) {
-                e.checkIn = userCheckIn;
-                e.checkOut = userCheckOut;
-                e.type = type;
-                e.description = "";
-              }
-            });
+          console.log("userCheckIn 5555", dayjs(checkIn).format("HH:mm"));
+          if (dayjs(checkIn).format("HH:mm") === "Invalid Date") {
+            handleSnakbarOpen(
+              "Please enter a valid format check in time",
+              "error"
+            );
+            return document.getElementById("checkIn").focus();
+          } else if (dayjs(checkOut).format("HH:mm") === "Invalid Date") {
+            handleSnakbarOpen(
+              "Please enter a valid format check out time",
+              "error"
+            );
+            return document.getElementById("checkOut").focus();
           } else {
-            newAttendanceSummary.push({
-              date: selectDateData.date,
-              monthName: selectDateData.monthName,
-              day: selectDateData.day,
-              year: currentYear,
-              checkIn: userCheckIn,
-              checkOut: userCheckOut,
-              type: type,
-              description: description,
-            });
+            if (obj?.date?.length > 0) {
+              newAttendanceSummary.map((e, i) => {
+                if (e.date === obj.date) {
+                  e.checkIn = userCheckIn;
+                  e.checkOut = userCheckOut;
+                  e.type = type;
+                  e.description = "";
+                }
+              });
+            } else {
+              newAttendanceSummary.push({
+                date: selectDateData.date,
+                monthName: selectDateData.monthName,
+                day: selectDateData.day,
+                year: currentYear,
+                checkIn: userCheckIn,
+                checkOut: userCheckOut,
+                type: type,
+                description: description,
+              });
+            }
           }
           changeMenu("Present");
           break;
@@ -396,13 +426,21 @@ function MyCalendar() {
           break;
 
         case "Event":
-          officeEvent.push({
-            date: selectDateData.date,
-            monthName: selectDateData.monthName,
-            day: selectDateData.day,
-            title: title,
-            description: description,
-          });
+          if (title.trim().length < 1) {
+            handleSnakbarOpen("Please enter title", "error");
+            return document.getElementById("title").focus();
+          } else if (description.trim().length < 1) {
+            handleSnakbarOpen("Please enter description", "error");
+            return document.getElementById("description").focus();
+          } else {
+            officeEvent.push({
+              date: selectDateData.date,
+              monthName: selectDateData.monthName,
+              day: selectDateData.day,
+              title: title,
+              description: description,
+            });
+          }
           changeMenu("Event");
           break;
 
@@ -509,9 +547,10 @@ function MyCalendar() {
     if (id === "Govt. Holiday") {
       setUserDays(newHolidays);
     } else if (id === "Present") {
-      setUserDays(
-        newAttendanceSummary.filter((item) => item.type === "Present")
-      );
+      // setUserDays(
+      //   newAttendanceSummary.filter((item) => item.type === "Present")
+      // );
+      setUserDays(newAttendanceSummary.concat(newHolidays));
     } else if (id === "Casual Leave") {
       setUserDays(
         newAttendanceSummary.filter((item) => item.type === "Casual Leave")
@@ -595,16 +634,12 @@ function MyCalendar() {
       day: date.day,
     };
     setSelectDateData(data);
-    console.log("selectDateData", data);
+    // console.log("selectDateData", data);
 
     let obj = newAttendanceSummary.find((o) => o.date === data.date);
-    console.log("obj", obj);
+    // console.log("obj", obj);
     switch (active) {
       case "Casual Leave":
-        console.log(
-          "parseInt(calculateCasualLeaves()",
-          parseInt(calculateCasualLeaves())
-        );
         let casualLeaveDays = parseInt(calculateCasualLeaves());
         addLeaves(data, obj, "Casual Leave", casualLeaveDays);
         changeMenu("Casual Leave");
@@ -616,7 +651,7 @@ function MyCalendar() {
         changeMenu("Medical Leave");
         break;
       case "Annual Leave":
-        let annualLeaveDays = parseInt(calculateMedicalLeaves());
+        let annualLeaveDays = parseInt(calculateAnnualLeaves());
         addLeaves(data, obj, "Annual Leave", annualLeaveDays);
 
         changeMenu("Annual Leave");
@@ -626,7 +661,7 @@ function MyCalendar() {
         handleClickOpen();
         break;
     }
-    console.log("date", date);
+    // console.log("date", date);
   };
   const calculateCasualLeaves = () => {
     let remain =
@@ -663,17 +698,36 @@ function MyCalendar() {
     let holidayObj = userDays.filter(
       (holiday) => holiday["monthName"] === month.name && holiday["day"] === day
     );
-
+    // console.log("holidayObj", holidayObj);
+    let selectedColor = weaklyHolidaysBGColor;
+    let fontColor = "white";
+    if (holidayObj[0]?.type === "Present") {
+      selectedColor = attendenceColor;
+      fontColor = "";
+    }
+    if (holidayObj[0]?.type === "Casual Leave") {
+      selectedColor = casualLeaveColor;
+      fontColor = "";
+    }
+    if (holidayObj[0]?.type === "Medical Leave") {
+      selectedColor = medialLeaveColor;
+      fontColor = "";
+    }
+    if (holidayObj[0]?.type === "Annual Leave") {
+      selectedColor = annualLeaveColor;
+      fontColor = "";
+    }
     if (holidayObj.length > 0) {
       return (
         <LightTooltip title={fnCheckTimes(holidayObj[0])}>
           <div
             style={{
-              background: holidayObj.length > 0 ? "#dfdfdf" : "",
+              background: holidayObj.length > 0 ? selectedColor : "",
               borderRadius: "4px",
               margin: "auto",
               fontWeight: "bold",
               cursor: "pointer",
+              color: fontColor,
             }}
             onClick={() =>
               handleSelectedDate(
@@ -871,6 +925,15 @@ function MyCalendar() {
     return obj?.description;
   };
 
+  const showDescriptionInput = () => {
+    let showDescription = false;
+    if (type === "Govt. Holiday" || type === "Event") {
+      showDescription = true;
+    }
+
+    return showDescription;
+  };
+
   return (
     <>
       {/* <br />
@@ -976,6 +1039,10 @@ function MyCalendar() {
                   }`}
                   onClick={() => changeMenu("Govt. Holiday")}
                 >
+                  <div
+                    className={classes.cardColorIcon}
+                    style={{ background: weaklyHolidaysBGColor }}
+                  ></div>
                   <p className={classes.holidayCardTitle}> Govt. Holidays</p>
                   <p className={classes.holidayCardDays}>
                     {newHolidays.length}
@@ -989,6 +1056,10 @@ function MyCalendar() {
                   }`}
                   onClick={() => changeMenu("Present")}
                 >
+                  <div
+                    className={classes.cardColorIcon}
+                    style={{ background: attendenceColor }}
+                  ></div>
                   <p className={classes.holidayCardTitle}>
                     {" "}
                     Attendance Summary
@@ -1005,6 +1076,10 @@ function MyCalendar() {
                   }`}
                   onClick={() => changeMenu("Casual Leave")}
                 >
+                  <div
+                    className={classes.cardColorIcon}
+                    style={{ background: casualLeaveColor }}
+                  ></div>
                   <p className={classes.holidayCardTitle}>Casual Leaves</p>
 
                   <Grid container>
@@ -1030,6 +1105,10 @@ function MyCalendar() {
                   }`}
                   onClick={() => changeMenu("Medical Leave")}
                 >
+                  <div
+                    className={classes.cardColorIcon}
+                    style={{ background: medialLeaveColor }}
+                  ></div>
                   <p className={classes.holidayCardTitle}> Medical Leaves</p>
 
                   <Grid container>
@@ -1055,6 +1134,10 @@ function MyCalendar() {
                   }`}
                   onClick={() => changeMenu("Annual Leave")}
                 >
+                  <div
+                    className={classes.cardColorIcon}
+                    style={{ background: annualLeaveColor }}
+                  ></div>
                   <p className={classes.holidayCardTitle}> Annual Leaves</p>
 
                   <Grid container>
@@ -1252,7 +1335,7 @@ function MyCalendar() {
             <>
               <TextField
                 fullWidth
-                id="standard-basic"
+                id="title"
                 label="Title"
                 // variant="standard"
                 size="small"
@@ -1271,7 +1354,12 @@ function MyCalendar() {
                   value={checkIn}
                   onChange={handleCheckInChange}
                   renderInput={(params) => (
-                    <TextField {...params} fullWidth size="small" />
+                    <TextField
+                      {...params}
+                      fullWidth
+                      size="small"
+                      id="checkIn"
+                    />
                   )}
                 />
                 <br />
@@ -1281,7 +1369,12 @@ function MyCalendar() {
                   value={checkOut}
                   onChange={handleCheckOutChange}
                   renderInput={(params) => (
-                    <TextField {...params} fullWidth size="small" />
+                    <TextField
+                      {...params}
+                      fullWidth
+                      size="small"
+                      id="checkOut"
+                    />
                   )}
                 />
               </LocalizationProvider>
@@ -1289,7 +1382,7 @@ function MyCalendar() {
               <br />
             </>
           )}
-          {type === "Govt. Holiday" && (
+          {showDescriptionInput() && (
             <>
               <TextField
                 fullWidth
