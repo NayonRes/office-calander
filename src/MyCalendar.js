@@ -275,6 +275,7 @@ function MyCalendar() {
     return isError;
   };
   const addEvents = () => {
+    console.log("addEvents 222");
     let err = validation();
     if (err) {
       return;
@@ -285,6 +286,7 @@ function MyCalendar() {
 
       switch (type) {
         case "Govt. Holiday":
+          console.log("asdfasdfas");
           let holidaysObj = newHolidays.find(
             (o) => o.date === selectDateData.date
           );
@@ -309,6 +311,7 @@ function MyCalendar() {
               });
               setDescription("");
             }
+            changeMenu("Govt. Holiday");
           }
           break;
         case "Present":
@@ -357,7 +360,7 @@ function MyCalendar() {
                 e.checkIn = "";
                 e.checkOut = "";
                 e.type = type;
-                e.description = "";
+                e.description = type;
               }
             });
           } else {
@@ -382,7 +385,7 @@ function MyCalendar() {
                 e.checkIn = "";
                 e.checkOut = "";
                 e.type = type;
-                e.description = "";
+                e.description = type;
               }
             });
           } else {
@@ -407,7 +410,7 @@ function MyCalendar() {
                 e.checkIn = "";
                 e.checkOut = "";
                 e.type = type;
-                e.description = "";
+                e.description = type;
               }
             });
           } else {
@@ -547,6 +550,7 @@ function MyCalendar() {
     if (id === "Govt. Holiday") {
       setUserDays(newHolidays);
     } else if (id === "Present") {
+      console.log("concat(newHolidays)");
       // setUserDays(
       //   newAttendanceSummary.filter((item) => item.type === "Present")
       // );
